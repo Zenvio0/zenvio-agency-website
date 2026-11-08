@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,10 +15,13 @@ body{margin:0;background:#09090d;color:#f5f5fa;font-family:Arial,sans-serif}
 .logo{text-align:center;font-size:27px;font-weight:900;letter-spacing:5px;margin-bottom:12px}
 .logo span{color:var(--purple)}
 .login-box p{text-align:center;color:var(--muted);font-size:13px;margin-bottom:28px}
-input{width:100%;padding:14px;margin:8px 0 16px;background:#09090d;color:white;border:1px solid var(--border);border-radius:8px}
+input,select,textarea{width:100%;padding:13px;margin:8px 0 16px;background:#09090d;color:white;border:1px solid var(--border);border-radius:8px}
+textarea{min-height:75px;resize:vertical}
 label{font-size:12px;color:#bbb}
 button{cursor:pointer}
-.primary{width:100%;padding:14px;background:var(--purple);color:white;border:0;border-radius:8px;font-weight:bold}
+button:disabled{opacity:.5;cursor:not-allowed}
+.primary{padding:13px 17px;background:var(--purple);color:white;border:0;border-radius:8px;font-weight:bold}
+.login-box .primary{width:100%;padding:14px}
 #error{color:#ff7777;font-size:12px;margin-top:15px;text-align:center}
 #dashboard{display:none}
 .layout{display:flex;min-height:100vh}
@@ -32,16 +34,15 @@ main{padding:32px;width:100%;max-width:1500px;margin:auto}
 .top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:25px}
 h1{font-size:27px;margin:0 0 8px}
 .sub{color:var(--muted);font-size:13px}
-.pill{border:1px solid #315b4c;color:#49d69a;padding:9px 13px;border-radius:30px;font-size:11px}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:20px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:20px;min-width:0}
 .metric-label{font-size:12px;color:var(--muted)}
 .metric{font-size:29px;font-weight:750;margin:15px 0 8px}
 .change{font-size:11px;color:#49d69a}
 .section-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:17px;margin-bottom:20px}
 h2{font-size:15px;margin:0 0 22px}
 .chart{height:250px}
-table{width:100%;border-collapse:collapse;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:650px}
 th,td{text-align:left;padding:14px 9px;border-bottom:1px solid var(--border)}
 th{color:var(--muted);font-weight:500}
 .status{color:#49d69a}
@@ -49,8 +50,17 @@ th{color:var(--muted);font-weight:500}
 .page.active{display:block}
 .notice{background:#241e13;border:1px solid #67502b;color:#e9c98d;padding:13px;border-radius:9px;font-size:12px;margin-bottom:20px;line-height:1.6}
 .logout{background:#292438;color:white;border:1px solid #393348;border-radius:7px;padding:10px 14px}
+.table-wrap{overflow-x:auto}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid label{display:block}
+.form-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.secondary{background:#292438;color:white;border:1px solid #393348;border-radius:8px;padding:12px 16px}
+.danger{background:#4b2028;color:#ffb5bc;border:1px solid #70323c;border-radius:7px;padding:8px 10px}
+.small-select{width:auto;min-width:115px;margin:0;padding:8px}
+#leadMessage{font-size:12px;color:var(--muted);margin-top:12px}
+.empty{text-align:center;color:var(--muted);padding:25px}
 @media(max-width:850px){.layout{display:block}aside{width:100%;padding:15px}aside .nav-wrap{display:flex;overflow:auto}.nav{white-space:nowrap;width:auto}.logo{margin:5px 10px 15px}main{padding:18px}.grid{grid-template-columns:repeat(2,1fr)}.section-grid{grid-template-columns:1fr}}
-@media(max-width:450px){.grid{grid-template-columns:1fr 1fr}.metric{font-size:22px}.top{align-items:flex-start;flex-direction:column}}
+@media(max-width:450px){.grid{grid-template-columns:1fr 1fr}.metric{font-size:22px}.top{align-items:flex-start;flex-direction:column}.form-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -84,62 +94,122 @@ th{color:var(--muted);font-weight:500}
     <button class="nav" onclick="showPage('insights',this)">✧ Insights</button>
    </div>
   </aside>
+
   <main>
    <div class="top">
     <div><h1 id="heading">Overview</h1><div class="sub">ZENVIO Command Center</div></div>
     <button class="logout" id="logoutButton">Sign out ↗</button>
    </div>
-   <div class="notice">PREVIEW DATA — Figures below are sample data, not real business results. Live analytics, CRM records and payment data are not connected yet.</div>
+
+   <div class="notice">
+    LIVE CRM CONNECTION — Client leads are loaded from your Supabase database.
+    Traffic analytics, projects and revenue are not connected yet.
+   </div>
 
    <section id="overview" class="page active">
     <div class="grid">
-     <div class="card"><div class="metric-label">Sample revenue</div><div class="metric">$8,420</div><div class="change">Preview metric</div></div>
-     <div class="card"><div class="metric-label">Sample visitors</div><div class="metric">12,840</div><div class="change">Preview metric</div></div>
-     <div class="card"><div class="metric-label">Sample leads</div><div class="metric">148</div><div class="change">Preview records</div></div>
-     <div class="card"><div class="metric-label">Sample projects</div><div class="metric">06</div><div class="change">Preview records</div></div>
+     <div class="card"><div class="metric-label">Total client leads</div><div class="metric" id="overviewLeadCount">—</div><div class="change">Live database count</div></div>
+     <div class="card"><div class="metric-label">New leads</div><div class="metric" id="overviewNewCount">—</div><div class="change">Awaiting follow-up</div></div>
+     <div class="card"><div class="metric-label">In progress</div><div class="metric" id="overviewProgressCount">—</div><div class="change">Active opportunities</div></div>
+     <div class="card"><div class="metric-label">Completed leads</div><div class="metric" id="overviewCompletedCount">—</div><div class="change">Marked completed</div></div>
     </div>
-    <div class="section-grid">
-     <div class="card"><h2>Performance overview</h2><div class="chart"><canvas id="mainChart"></canvas></div></div>
-     <div class="card"><h2>Lead sources</h2><div class="chart"><canvas id="sourceChart"></canvas></div></div>
-    </div>
-    <div class="card"><h2>Recent activity · Sample</h2>
-     <table><thead><tr><th>Activity</th><th>Type</th><th>Status</th></tr></thead><tbody>
-      <tr><td>Website redesign inquiry</td><td>New lead</td><td class="status">Sample</td></tr>
-      <tr><td>Mobile app concept</td><td>Project</td><td class="status">Sample</td></tr>
-      <tr><td>Contact form submission</td><td>Inquiry</td><td class="status">Sample</td></tr>
-     </tbody></table>
+    <div class="card">
+     <h2>Recent client leads</h2>
+     <div class="table-wrap">
+      <table>
+       <thead><tr><th>Client</th><th>Business</th><th>Country</th><th>Status</th></tr></thead>
+       <tbody id="recentLeads"><tr><td colspan="4">Loading...</td></tr></tbody>
+      </table>
+     </div>
     </div>
    </section>
 
-   <section id="analytics" class="page"><div class="card"><h2>Traffic analytics</h2><p class="sub">Sample visitor data — live tracking not connected.</p><div class="chart"><canvas id="analyticsChart"></canvas></div></div></section>
+   <section id="analytics" class="page">
+    <div class="card">
+     <h2>Traffic analytics</h2>
+     <p class="sub">Website visitor tracking is not connected yet.</p>
+     <p class="sub">Once analytics is integrated, real visitor data will appear here.</p>
+    </div>
+   </section>
 
-   <section id="leads" class="page"><div class="card"><h2>Lead management · Sample records</h2>
-    <table><thead><tr><th>Client</th><th>Service</th><th>Location</th><th>Status</th></tr></thead><tbody>
-     <tr><td>Alex Morgan</td><td>Website</td><td>USA</td><td class="status">Sample</td></tr>
-     <tr><td>Olivia James</td><td>Mobile app</td><td>UK</td><td class="status">Sample</td></tr>
-     <tr><td>Daniel Smith</td><td>AI automation</td><td>USA</td><td class="status">Sample</td></tr>
-    </tbody></table>
-   </div></section>
+   <section id="leads" class="page">
+    <div class="card" style="margin-bottom:18px">
+     <h2>Add a new client lead</h2>
+     <form id="leadForm">
+      <div class="form-grid">
+       <div><label>Client name *</label><input id="clientName" required placeholder="Client full name"></div>
+       <div><label>Email</label><input id="clientEmail" type="email" placeholder="client@example.com"></div>
+       <div><label>Business name</label><input id="businessName" placeholder="Business or company"></div>
+       <div><label>Country</label><input id="country" placeholder="USA, UK, etc."></div>
+       <div><label>Service</label>
+        <select id="service">
+         <option value="">Select service</option>
+         <option>Website Development</option>
+         <option>Web Application</option>
+         <option>Mobile App Development</option>
+         <option>AI Chatbot</option>
+         <option>Workflow Automation</option>
+         <option>Other</option>
+        </select>
+       </div>
+       <div><label>Budget</label><input id="budget" placeholder="e.g. $500–$1,000"></div>
+       <div><label>Status</label>
+        <select id="newStatus">
+         <option>New</option><option>Contacted</option><option>In Progress</option><option>Completed</option><option>Lost</option>
+        </select>
+       </div>
+      </div>
+      <label>Notes</label>
+      <textarea id="notes" placeholder="Client requirements or follow-up notes"></textarea>
+      <div class="form-actions">
+       <button class="primary" id="saveLeadButton" type="submit">Save client lead</button>
+       <button class="secondary" type="reset">Clear form</button>
+      </div>
+      <div id="leadMessage"></div>
+     </form>
+    </div>
 
-   <section id="projects" class="page"><div class="card"><h2>Project pipeline · Concepts</h2>
-    <table><thead><tr><th>Project</th><th>Service</th><th>Stage</th></tr></thead><tbody>
-     <tr><td>Commerce experience</td><td>Website</td><td>Concept</td></tr>
-     <tr><td>Client portal</td><td>Web app</td><td>Concept</td></tr>
-     <tr><td>Smart assistant</td><td>AI chatbot</td><td>Concept</td></tr>
-    </tbody></table>
-   </div></section>
+    <div class="card">
+     <div class="top">
+      <div><h2>Client leads & CRM</h2><div class="sub" id="leadCount">Loading database...</div></div>
+      <button class="secondary" id="refreshLeads">↻ Refresh</button>
+     </div>
+     <div class="table-wrap">
+      <table>
+       <thead>
+        <tr><th>Client</th><th>Email</th><th>Business</th><th>Country</th><th>Service</th><th>Status</th><th>Action</th></tr>
+       </thead>
+       <tbody id="leadsTable"><tr><td colspan="7">Loading leads...</td></tr></tbody>
+      </table>
+     </div>
+     <div id="databaseMessage"></div>
+    </div>
+   </section>
 
-   <section id="revenue" class="page"><div class="card"><h2>Revenue overview · Sample</h2><p class="metric">$8,420</p><p class="sub">No payment gateway or accounting system connected.</p><div class="chart"><canvas id="revenueChart"></canvas></div></div></section>
+   <section id="projects" class="page">
+    <div class="card"><h2>Project management</h2>
+     <p class="sub">Project tracking is not connected yet. We will add a live projects database in a later step.</p>
+    </div>
+   </section>
 
-   <section id="insights" class="page"><div class="grid">
-    <div class="card"><div class="metric-label">Primary target market</div><div class="metric">USA</div></div>
-    <div class="card"><div class="metric-label">Secondary target market</div><div class="metric">UK</div></div>
-   </div><div class="card"><h2>Growth priorities</h2>
-    <p class="sub">01 — Build a strong portfolio with real, clearly labelled case studies.</p>
-    <p class="sub">02 — Generate qualified business leads.</p>
-    <p class="sub">03 — Improve website conversion and follow-up.</p>
-    <p class="sub">04 — Connect secure CRM and analytics services.</p>
-   </div></section>
+   <section id="revenue" class="page">
+    <div class="card"><h2>Revenue overview</h2>
+     <p class="sub">No payment gateway or accounting system is connected yet. No revenue figures are being estimated here.</p>
+    </div>
+   </section>
+
+   <section id="insights" class="page">
+    <div class="grid">
+     <div class="card"><div class="metric-label">Primary target market</div><div class="metric">USA</div></div>
+     <div class="card"><div class="metric-label">Secondary target market</div><div class="metric">UK</div></div>
+    </div>
+    <div class="card"><h2>Growth priorities</h2>
+     <p class="sub">01 — Build a strong portfolio with real, clearly labelled case studies.</p>
+     <p class="sub">02 — Generate qualified business leads.</p>
+     <p class="sub">03 — Improve website conversion and follow-up.</p>
+     <p class="sub">04 — Track client opportunities in the CRM.</p>
+    </div>
+   </section>
   </main>
  </div>
 </div>
@@ -149,19 +219,42 @@ const SUPABASE_URL = "https://bohblrqrkkfmqwvtulcs.supabase.co";
 const SUPABASE_KEY = "sb_publishable_kDAD7Eo3LDNKO7T18niELA_qGFdq8D9";
 
 const client = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const loginScreen=document.getElementById("loginScreen");
-const dashboard=document.getElementById("dashboard");
-const errorBox=document.getElementById("error");
-const loginButton=document.getElementById("loginButton");
 
-function showSignedIn(){
- loginScreen.style.display="none";
- dashboard.style.display="block";
- startCharts();
-}
+const loginScreen = document.getElementById("loginScreen");
+const dashboard = document.getElementById("dashboard");
+const errorBox = document.getElementById("error");
+const loginButton = document.getElementById("loginButton");
+
+let leadsCache = [];
+
 function showSignedOut(){
  dashboard.style.display="none";
  loginScreen.style.display="flex";
+}
+
+async function authorizeSession(session){
+ if(!session){
+  showSignedOut();
+  return;
+ }
+
+ // Verify that the signed-in account is on the admin allowlist.
+ const {data,error} = await client
+  .from("admin_users")
+  .select("user_id")
+  .eq("user_id",session.user.id)
+  .maybeSingle();
+
+ if(error || !data){
+  await client.auth.signOut();
+  showSignedOut();
+  errorBox.textContent="This account is not authorized for admin access.";
+  return;
+ }
+
+ loginScreen.style.display="none";
+ dashboard.style.display="block";
+ await loadLeads();
 }
 
 document.getElementById("loginForm").addEventListener("submit",async function(e){
@@ -169,16 +262,20 @@ document.getElementById("loginForm").addEventListener("submit",async function(e)
  errorBox.textContent="";
  loginButton.disabled=true;
  loginButton.textContent="Signing in...";
+
  const email=document.getElementById("email").value.trim();
  const password=document.getElementById("password").value;
- const {data,error}=await client.auth.signInWithPassword({email,password});
- loginButton.disabled=false;
- loginButton.textContent="Sign in to dashboard";
- if(error){
-  errorBox.textContent="Login failed. Check your email and password.";
-  return;
+
+ try{
+  const {data,error}=await client.auth.signInWithPassword({email,password});
+  if(error) throw error;
+  await authorizeSession(data.session);
+ }catch(err){
+  errorBox.textContent="Login failed. Check your email, password or admin access.";
+ }finally{
+  loginButton.disabled=false;
+  loginButton.textContent="Sign in to dashboard";
  }
- showSignedIn();
 });
 
 document.getElementById("logoutButton").addEventListener("click",async()=>{
@@ -186,13 +283,19 @@ document.getElementById("logoutButton").addEventListener("click",async()=>{
  showSignedOut();
 });
 
-client.auth.getSession().then(({data})=>{
- if(data.session) showSignedIn();
- else showSignedOut();
+client.auth.getSession().then(({data,error})=>{
+ if(error || !data.session){
+  showSignedOut();
+ }else{
+  authorizeSession(data.session);
+ }
 });
 
+// Avoid running database requests directly inside the auth callback.
 client.auth.onAuthStateChange((event,session)=>{
- if(event==="SIGNED_OUT"||!session) showSignedOut();
+ if(event==="SIGNED_OUT"){
+  showSignedOut();
+ }
 });
 
 function showPage(id,btn){
@@ -203,24 +306,145 @@ function showPage(id,btn){
  document.getElementById("heading").textContent=btn.textContent.trim().replace(/^[◈▥◎▣◇✧]\s*/,"");
 }
 
-let chartsStarted=false;
-function startCharts(){
- if(chartsStarted)return;
- chartsStarted=true;
- Chart.defaults.color="#9292a6";
- Chart.defaults.borderColor="#292938";
- const labels=["Jan","Feb","Mar","Apr","May","Jun","Jul"];
- function lineChart(id,data){
-  const el=document.getElementById(id);
-  if(!el)return;
-  new Chart(el,{type:"line",data:{labels,datasets:[{data,borderColor:"#9270ff",backgroundColor:"rgba(146,112,255,.12)",fill:true,tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
- }
- lineChart("mainChart",[12,19,15,28,24,37,43]);
- lineChart("analyticsChart",[120,190,150,280,240,370,430]);
- lineChart("revenueChart",[500,900,750,1200,1100,1800,2100]);
- const source=document.getElementById("sourceChart");
- if(source)new Chart(source,{type:"doughnut",data:{labels:["Search","Social","Direct","Referral"],datasets:[{data:[40,30,20,10],backgroundColor:["#9270ff","#49d69a","#e8ad65","#5c91e8"],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
+function escapeHTML(value){
+ return String(value ?? "").replace(/[&<>"']/g,char=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[char]));
 }
+
+function renderLeads(){
+ const tbody=document.getElementById("leadsTable");
+ const recent=document.getElementById("recentLeads");
+
+ document.getElementById("leadCount").textContent=
+  leadsCache.length+" client lead(s) in database";
+
+ document.getElementById("overviewLeadCount").textContent=leadsCache.length;
+ document.getElementById("overviewNewCount").textContent=
+  leadsCache.filter(x=>x.status==="New").length;
+ document.getElementById("overviewProgressCount").textContent=
+  leadsCache.filter(x=>x.status==="In Progress").length;
+ document.getElementById("overviewCompletedCount").textContent=
+  leadsCache.filter(x=>x.status==="Completed").length;
+
+ if(!leadsCache.length){
+  tbody.innerHTML='<tr><td colspan="7" class="empty">No client leads yet. Add your first lead above.</td></tr>';
+  recent.innerHTML='<tr><td colspan="4" class="empty">No leads yet.</td></tr>';
+  return;
+ }
+
+ tbody.innerHTML=leadsCache.map(lead=>`
+  <tr>
+   <td>${escapeHTML(lead.client_name)}</td>
+   <td>${escapeHTML(lead.email || "—")}</td>
+   <td>${escapeHTML(lead.business_name || "—")}</td>
+   <td>${escapeHTML(lead.country || "—")}</td>
+   <td>${escapeHTML(lead.service || "—")}</td>
+   <td>
+    <select class="small-select" onchange="updateLeadStatus('${lead.id}',this.value)">
+     ${["New","Contacted","In Progress","Completed","Lost"].map(status=>
+      `<option value="${status}" ${lead.status===status?"selected":""}>${status}</option>`
+     ).join("")}
+    </select>
+   </td>
+   <td><button class="danger" onclick="deleteLead('${lead.id}')">Delete</button></td>
+  </tr>
+ `).join("");
+
+ recent.innerHTML=leadsCache.slice(0,5).map(lead=>`
+  <tr>
+   <td>${escapeHTML(lead.client_name)}</td>
+   <td>${escapeHTML(lead.business_name || "—")}</td>
+   <td>${escapeHTML(lead.country || "—")}</td>
+   <td class="status">${escapeHTML(lead.status || "New")}</td>
+  </tr>
+ `).join("");
+}
+
+async function loadLeads(){
+ const message=document.getElementById("databaseMessage");
+ message.textContent="Loading client leads...";
+
+ const {data,error}=await client
+  .from("leads")
+  .select("*")
+  .order("created_at",{ascending:false});
+
+ if(error){
+  message.textContent="Could not load leads: "+error.message;
+  return;
+ }
+
+ leadsCache=data || [];
+ message.textContent="";
+ renderLeads();
+}
+
+document.getElementById("leadForm").addEventListener("submit",async function(e){
+ e.preventDefault();
+
+ const button=document.getElementById("saveLeadButton");
+ const message=document.getElementById("leadMessage");
+
+ button.disabled=true;
+ button.textContent="Saving...";
+ message.textContent="";
+
+ const newLead={
+  client_name:document.getElementById("clientName").value.trim(),
+  email:document.getElementById("clientEmail").value.trim() || null,
+  business_name:document.getElementById("businessName").value.trim() || null,
+  country:document.getElementById("country").value.trim() || null,
+  service:document.getElementById("service").value || null,
+  budget:document.getElementById("budget").value.trim() || null,
+  status:document.getElementById("newStatus").value,
+  notes:document.getElementById("notes").value.trim() || null
+ };
+
+ try{
+  const {error}=await client.from("leads").insert([newLead]);
+  if(error) throw error;
+
+  this.reset();
+  message.textContent="Client lead saved successfully.";
+  await loadLeads();
+ }catch(err){
+  message.textContent="Could not save lead: "+err.message;
+ }finally{
+  button.disabled=false;
+  button.textContent="Save client lead";
+ }
+});
+
+async function updateLeadStatus(id,status){
+ const {error}=await client
+  .from("leads")
+  .update({status})
+  .eq("id",id);
+
+ if(error){
+  alert("Could not update status: "+error.message);
+ }else{
+  await loadLeads();
+ }
+}
+
+async function deleteLead(id){
+ if(!confirm("Are you sure you want to delete this client lead?"))return;
+
+ const {error}=await client
+  .from("leads")
+  .delete()
+  .eq("id",id);
+
+ if(error){
+  alert("Could not delete lead: "+error.message);
+ }else{
+  await loadLeads();
+ }
+}
+
+document.getElementById("refreshLeads").addEventListener("click",loadLeads);
 </script>
 </body>
 </html>
