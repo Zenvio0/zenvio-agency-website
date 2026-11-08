@@ -238,19 +238,23 @@ async function authorizeSession(session){
   return;
  }
 
- // Verify that the signed-in account is on the admin allowlist.
- const {data,error} = await client
+// Verify admin access and reveal the exact database error.
+const { data, error } = await client
   .from("admin_users")
   .select("user_id")
-  .eq("user_id",session.user.id)
+  .eq("user_id", session.user.id)
   .maybeSingle();
 
- if(error || !data){
+if (error || !data) {
+  const reason = error
+    ? error.message
+    : "No matching admin user row found";
+
+  errorBox.textContent = "Admin check failed: " + reason;
   await client.auth.signOut();
   showSignedOut();
-  errorBox.textContent="This account is not authorized for admin access.";
   return;
- }
+}
 
  loginScreen.style.display="none";
  dashboard.style.display="block";
