@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZENVIO | Command Center</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#09090d;--panel:#12121a;--border:#242432;--text:#f5f5fa;--muted:#9292a6;--purple:#9270ff;--green:#49d69a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
+.layout{display:flex;min-height:100vh}
+aside{width:245px;background:#0d0d14;border-right:1px solid var(--border);padding:28px 18px;flex-shrink:0}
+.logo{font-size:25px;font-weight:900;letter-spacing:4px;margin:5px 12px 35px}
+.logo span{color:var(--purple)}
+.nav-label{font-size:10px;color:var(--muted);letter-spacing:2px;margin:25px 12px 12px}
+.nav{display:block;width:100%;border:0;background:transparent;color:#aaaabd;text-align:left;padding:13px 14px;border-radius:9px;margin:4px 0;cursor:pointer;font-size:14px}
+.nav.active,.nav:hover{background:#211b36;color:white}
+main{padding:35px;width:100%;max-width:1500px;margin:auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:30px}
+h1{font-size:27px;margin:0 0 8px}
+.sub{color:var(--muted);font-size:13px}
+.pill{border:1px solid #315b4c;color:var(--green);padding:9px 13px;border-radius:30px;font-size:11px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:21px}
+.metric-label{font-size:12px;color:var(--muted)}
+.metric{font-size:29px;font-weight:750;margin:15px 0 8px}
+.change{font-size:11px;color:var(--green)}
+.section-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:17px;margin-bottom:20px}
+h2{font-size:15px;margin:0 0 22px}
+.chart{height:250px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{text-align:left;padding:14px 9px;border-bottom:1px solid var(--border)}
+th{color:var(--muted);font-weight:500}
+.status{color:var(--green)}
+.page{display:none}
+.page.active{display:block}
+.btn{background:var(--purple);border:0;border-radius:7px;color:white;padding:11px 15px;cursor:pointer}
+.notice{background:#241e13;border:1px solid #67502b;color:#e9c98d;padding:13px 16px;border-radius:9px;font-size:12px;margin-bottom:20px;line-height:1.6}
+@media(max-width:850px){.layout{display:block}aside{width:100%;padding:15px}aside .nav-wrap{display:flex;overflow:auto}.nav{white-space:nowrap;width:auto;margin:0 3px}.logo{margin:5px 10px 15px}main{padding:20px}.grid{grid-template-columns:repeat(2,1fr)}.section-grid{grid-template-columns:1fr}}
+@media(max-width:450px){.grid{grid-template-columns:1fr 1fr}.metric{font-size:23px}.top{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+<div class="logo">ZEN<span>VIO</span></div>
+<div class="nav-label">WORKSPACE</div>
+<div class="nav-wrap">
+<button class="nav active" onclick="showPage('overview',this)">◈ Overview</button>
+<button class="nav" onclick="showPage('analytics',this)">▥ Analytics</button>
+<button class="nav" onclick="showPage('leads',this)">◎ Leads & CRM</button>
+<button class="nav" onclick="showPage('projects',this)">▣ Projects</button>
+<button class="nav" onclick="showPage('revenue',this)">◇ Revenue</button>
+</div>
+<div class="nav-label">SYSTEM</div>
+<button class="nav" onclick="showPage('insights',this)">✧ Business insights</button>
+</aside>
+<main>
+<div class="top">
+<div><h1 id="heading">Overview</h1><div class="sub">Your business at a glance · ZENVIO Command Center</div></div>
+<div class="pill">● DEMO MODE</div>
+</div>
+<div class="notice">DEMO DASHBOARD — All figures and records below are sample data for design preview only. No real sales, visitors, clients, or payments are connected. This page has no login or access protection yet. Do not enter confidential information.</div>
+
+<section id="overview" class="page active">
+<div class="grid">
+<div class="card"><div class="metric-label">Total revenue</div><div class="metric">$8,420</div><div class="change">↑ Sample metric</div></div>
+<div class="card"><div class="metric-label">Website visitors</div><div class="metric">12,840</div><div class="change">↑ Sample metric</div></div>
+<div class="card"><div class="metric-label">Total leads</div><div class="metric">148</div><div class="change">Sample records</div></div>
+<div class="card"><div class="metric-label">Active projects</div><div class="metric">06</div><div class="change">Sample projects</div></div>
+</div>
+<div class="section-grid">
+<div class="card"><h2>Performance overview</h2><div class="chart"><canvas id="mainChart"></canvas></div></div>
+<div class="card"><h2>Lead sources</h2><div class="chart"><canvas id="sourceChart"></canvas></div></div>
+</div>
+<div class="card"><h2>Recent activity</h2><table><thead><tr><th>Activity</th><th>Type</th><th>Status</th></tr></thead><tbody>
+<tr><td>Website redesign inquiry</td><td>New lead</td><td class="status">Sample</td></tr>
+<tr><td>Mobile app concept</td><td>Project</td><td class="status">Sample</td></tr>
+<tr><td>Contact form submission</td><td>Inquiry</td><td class="status">Sample</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="analytics" class="page"><div class="card"><h2>Traffic analytics</h2><p class="sub">Sample visitor data — live tracking is not connected.</p><div class="chart"><canvas id="analyticsChart"></canvas></div></div></section>
+
+<section id="leads" class="page"><div class="card"><h2>Lead management</h2><p class="sub">Illustrative CRM records only.</p><table><thead><tr><th>Client</th><th>Service</th><th>Location</th><th>Status</th></tr></thead><tbody>
+<tr><td>Alex Morgan</td><td>Website</td><td>USA</td><td class="status">Sample</td></tr>
+<tr><td>Olivia James</td><td>Mobile app</td><td>UK</td><td class="status">Sample</td></tr>
+<tr><td>Daniel Smith</td><td>AI automation</td><td>USA</td><td class="status">Sample</td></tr>
+<tr><td>Emily Brown</td><td>Web app</td><td>UK</td><td class="status">Sample</td></tr>
+</tbody></table></div></section>
+
+<section id="projects" class="page"><div class="card"><h2>Project pipeline</h2><table><thead><tr><th>Project</th><th>Service</th><th>Stage</th></tr></thead><tbody>
+<tr><td>Commerce experience</td><td>Website</td><td>Concept</td></tr>
+<tr><td>Client portal</td><td>Web app</td><td>Concept</td></tr>
+<tr><td>Smart assistant</td><td>AI chatbot</td><td>Concept</td></tr>
+</tbody></table></div></section>
+
+<section id="revenue" class="page"><div class="card"><h2>Revenue overview</h2><p class="metric">$8,420</p><p class="sub">Illustrative figure only. No payment gateway or accounting system connected.</p><div class="chart"><canvas id="revenueChart"></canvas></div></div></section>
+
+<section id="insights" class="page"><div class="grid">
+<div class="card"><div class="metric-label">Primary market</div><div class="metric">USA</div><div class="sub">Target market concept</div></div>
+<div class="card"><div class="metric-label">Secondary market</div><div class="metric">UK</div><div class="sub">Target market concept</div></div>
+</div><div class="card"><h2>Growth priorities</h2><p class="sub">01 — Build a strong portfolio with real, clearly labelled case studies.</p><p class="sub">02 — Generate qualified business leads.</p><p class="sub">03 — Improve website conversion and follow-up.</p><p class="sub">04 — Connect secure CRM and analytics services.</p></div></section>
+</main>
+</div>
+<script>
+function showPage(id,btn){
+document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));
+btn.classList.add('active');
+document.getElementById('heading').textContent=btn.textContent.trim().replace(/^[◈▥◎▣◇✧]\s*/,'');
+}
+Chart.defaults.color='#9292a6';
+Chart.defaults.borderColor='#292938';
+const labels=['Jan','Feb','Mar','Apr','May','Jun','Jul'];
+function lineChart(id,data,label){
+const el=document.getElementById(id);
+if(!el)return;
+new Chart(el,{type:'line',data:{labels,datasets:[{label,data,borderColor:'#9270ff',backgroundColor:'rgba(146,112,255,.12)',fill:true,tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+}
+lineChart('mainChart',[12,19,15,28,24,37,43],'Performance');
+lineChart('analyticsChart',[120,190,150,280,240,370,430],'Visitors');
+lineChart('revenueChart',[500,900,750,1200,1100,1800,2100],'Revenue');
+const source=document.getElementById('sourceChart');
+if(source)new Chart(source,{type:'doughnut',data:{labels:['Search','Social','Direct','Referral'],datasets:[{data:[40,30,20,10],backgroundColor:['#9270ff','#49d69a','#e8ad65','#5c91e8'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+</script>
+</body>
+</html>
