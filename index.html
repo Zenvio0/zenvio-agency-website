@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08080d">
+<meta name="description" content="ZENVIO is a digital agency building premium websites, applications and intelligent business solutions.">
+<title>ZENVIO® — Digital Experiences That Move Business Forward</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08080d;--surface:#11121a;--surface2:#171823;--white:#f6f5fa;--muted:#9899a9;--purple:#9878ff;--line:#292936;--max:1240px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button,input,textarea,select{font:inherit}
+button,a{-webkit-tap-highlight-color:transparent}
+.container{width:min(var(--max),86%);margin:auto}
+nav{height:78px;position:fixed;z-index:100;inset:0 0 auto;background:#08080ddd;backdrop-filter:blur(18px);border-bottom:1px solid #ffffff12}
+.nav-inner{height:100%;display:flex;align-items:center;justify-content:space-between;width:min(var(--max),86%);margin:auto}
+.logo{font:700 29px 'Space Grotesk';letter-spacing:-2px}
+.logo span{color:var(--purple)}
+.nav-links{display:flex;align-items:center;gap:30px;color:#b3b1c0;font-size:13px}
+.nav-links a:hover{color:white}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;background:var(--white);color:#090910;padding:14px 22px;border-radius:4px;font-size:12px;font-weight:700;border:1px solid transparent;transition:.3s;cursor:pointer}
+.btn:hover{background:var(--purple);color:white;transform:translateY(-3px)}
+.btn-outline{background:transparent;color:white;border-color:#ffffff38}
+.btn-outline:hover{border-color:var(--purple)}
+.menu-btn{display:none;background:none;color:white;border:0;font-size:25px}
+.hero{min-height:850px;height:100vh;max-height:1100px;display:flex;align-items:center;position:relative;overflow:hidden;padding-top:78px}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 76% 42%,#5535a62c,transparent 35%),radial-gradient(ellipse at 20% 90%,#24204a35,transparent 35%)}
+.orb{position:absolute;width:390px;height:390px;right:10%;top:24%;border-radius:50%;border:1px solid #a38aff30;box-shadow:inset 0 0 80px #8962ff12,0 0 100px #8d68ff16;animation:float 8s ease-in-out infinite}
+.orb:before,.orb:after{content:"";position:absolute;border:1px solid #a38aff30;border-radius:50%;inset:35px}
+.orb:after{inset:75px;background:radial-gradient(circle at 30% 30%,#c3b3ff55,#6c43bf20 35%,transparent 70%);box-shadow:0 0 80px #8962ff44}
+@keyframes float{50%{transform:translateY(-22px) rotate(8deg)}}
+.hero-content{position:relative;z-index:2;padding-top:50px}
+.eyebrow{font-size:10px;letter-spacing:4px;color:#c0aaff;margin-bottom:28px}
+.hero h1{font:700 clamp(62px,9vw,120px)/.91 'Space Grotesk';letter-spacing:-7px;max-width:850px}
+.gradient{background:linear-gradient(100deg,#a88aff,#e2d9ff 55%,#9677ff);background-clip:text;color:transparent}
+.hero-copy{max-width:510px;color:var(--muted);line-height:1.9;font-size:15px;margin:30px 0}
+.actions{display:flex;gap:13px;flex-wrap:wrap}
+.hero-bottom{position:absolute;bottom:45px;left:7%;right:7%;display:flex;justify-content:space-between;color:#818091;font-size:10px;letter-spacing:2px}
+.hero-bottom span:last-child{text-align:right}
+.marquee{overflow:hidden;border-block:1px solid var(--line);padding:23px 0;color:#b3a3ee;font:600 12px 'Space Grotesk';letter-spacing:3px;white-space:nowrap}
+.marquee-inner{display:flex;gap:55px;width:max-content;animation:move 28s linear infinite}
+@keyframes move{to{transform:translateX(-50%)}}
+section{padding:120px 0}
+.section-label{font-size:10px;color:var(--purple);letter-spacing:3px;margin-bottom:22px}
+.section-title{font:600 clamp(37px,5.2vw,68px)/1.08 'Space Grotesk';letter-spacing:-3px;max-width:780px}
+.section-intro{color:var(--muted);line-height:1.9;font-size:14px;max-width:470px;margin-top:23px}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:90px;align-items:center}
+.about-card{background:linear-gradient(135deg,#171421,#101118);border:1px solid #ffffff15;padding:40px;position:relative;overflow:hidden;min-height:300px}
+.about-card:after{content:"Z";position:absolute;font:700 250px 'Space Grotesk';right:10px;bottom:-95px;color:#9878ff13}
+.about-card h3{font:600 28px 'Space Grotesk';position:relative;z-index:1}
+.about-card p{color:var(--muted);font-size:13px;line-height:1.9;margin-top:20px;max-width:370px;position:relative;z-index:1}
+.about-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px;position:relative;z-index:1}
+.tag{font-size:10px;border:1px solid #ffffff20;padding:9px 12px;color:#c5b5ff}
+.services-head,.work-head{display:flex;justify-content:space-between;align-items:end;gap:35px}
+.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:55px}
+.service{padding:33px 27px;background:var(--surface);border:1px solid var(--line);min-height:280px;transition:.4s}
+.service:hover{transform:translateY(-8px);border-color:var(--purple)}
+.service-icon{width:44px;height:44px;border:1px solid #9878ff60;color:#bba8ff;display:grid;place-items:center;font-size:19px}
+.service small{display:block;margin-top:28px;color:var(--purple);letter-spacing:2px;font-size:9px}
+.service h3{font:600 24px 'Space Grotesk';margin:13px 0}
+.service p{color:var(--muted);font-size:12px;line-height:1.9}
+.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:50px}
+.project{background:var(--surface);border:1px solid var(--line);overflow:hidden;transition:.4s}
+.project:hover{transform:translateY(-6px);border-color:#8d70e5}
+.project-screen{height:310px;display:grid;place-items:center;padding:28px;background:radial-gradient(circle at 50% 45%,#48336d,#17141f 65%,#101016)}
+.project:nth-child(2) .project-screen{background:radial-gradient(circle at 50% 45%,#26534f,#101b1b 70%)}
+.project:nth-child(3) .project-screen{background:radial-gradient(circle at 50% 45%,#623d49,#191116 70%)}
+.project:nth-child(4) .project-screen{background:radial-gradient(circle at 50% 45%,#3d4874,#10131f 70%)}
+.mock{width:92%;background:#10121a;border:1px solid #ffffff35;border-radius:8px;padding:15px;box-shadow:0 20px 60px #0009;transform:perspective(900px) rotateY(-7deg)}
+.mock-bar{font-size:8px;color:#888;border-bottom:1px solid #ffffff20;padding-bottom:12px}
+.mock-body{padding:25px 12px}
+.mock-body strong{font:600 27px 'Space Grotesk';display:block}
+.mock-body p{font-size:9px;color:#aaa;margin-top:10px}
+.mock-cta{display:inline-block;background:#9675ff;padding:9px 13px;font-size:8px;margin-top:16px}
+.project-info{padding:23px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.project-info h3{font:600 19px 'Space Grotesk'}
+.project-info p{font-size:11px;color:var(--muted);margin-top:7px}
+.project-info span{font-size:9px;color:var(--purple);letter-spacing:1px}
+.process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:55px}
+.step{border-top:1px solid var(--line);padding-top:24px}
+.step-num{font-size:11px;color:var(--purple)}
+.step h3{font:600 21px 'Space Grotesk';margin:25px 0 12px}
+.step p{color:var(--muted);font-size:12px;line-height:1.9}
+.insight-box{margin-top:45px;padding:65px;background:linear-gradient(110deg,#1a1429,#11121a);border:1px solid #ffffff17}
+.insight-box h3{font:600 clamp(28px,4vw,47px) 'Space Grotesk';max-width:680px}
+.insight-box p{color:var(--muted);max-width:560px;font-size:13px;line-height:1.9;margin:20px 0 28px}
+.contact{background:#0d0e15;border-block:1px solid var(--line)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:75px;margin-top:48px}
+.contact-copy{color:var(--muted);line-height:1.9;font-size:14px;max-width:430px}
+.contact-detail{margin-top:32px;color:#c6b9ff;font-size:13px}
+form{display:grid;gap:14px}
+input,textarea,select{width:100%;padding:16px;background:#151620;color:white;border:1px solid var(--line);outline:none;border-radius:3px;font-size:13px}
+input:focus,textarea:focus,select:focus{border-color:var(--purple)}
+textarea{min-height:135px;resize:vertical}
+form button{width:100%}
+footer{padding:35px 0}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;gap:20px;color:var(--muted);font-size:11px}
+.footer-links{display:flex;gap:20px}
+.footer-links a:hover{color:white}
+.reveal{opacity:0;transform:translateY(35px);transition:opacity .8s ease,transform .8s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+@media(max-width:800px){
+ .container,.nav-inner{width:90%}
+ .nav-links{display:none;position:absolute;top:78px;left:0;right:0;background:#101019;padding:25px;flex-direction:column;gap:22px;border-bottom:1px solid var(--line)}
+ .nav-links.open{display:flex}
+ .menu-btn{display:block}
+ .nav-cta{display:none}
+ .hero{min-height:760px;height:auto;padding:190px 0 130px}
+ .hero h1{letter-spacing:-4px}
+ .orb{width:240px;height:240px;right:-100px;top:23%;opacity:.6}
+ .hero-bottom{bottom:25px}
+ section{padding:85px 0}
+ .about-grid,.contact-grid{grid-template-columns:1fr;gap:35px}
+ .services-head,.work-head{display:block}
+ .services-grid{grid-template-columns:1fr}
+ .work-grid{grid-template-columns:1fr}
+ .process-grid{grid-template-columns:1fr 1fr;gap:30px}
+ .insight-box{padding:35px 24px}
+ .project-screen{height:260px}
+ .footer-inner{flex-direction:column;align-items:flex-start}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<nav>
+ <div class="nav-inner">
+  <a class="logo" href="#">ZENVIO<span>.</span></a>
+  <div class="nav-links" id="navLinks">
+   <a href="#about">About</a><a href="#services">Services</a><a href="#work">Portfolio</a><a href="#process">Process</a><a href="#contact">Contact</a>
+  </div>
+  <a class="btn nav-cta" href="#contact">Start a project ↗</a>
+  <button class="menu-btn" id="menuBtn" aria-label="Open navigation">☰</button>
+ </div>
+</nav>
+
+<header class="hero">
+ <div class="hero-bg"></div><div class="orb"></div>
+ <div class="container hero-content">
+  <div class="eyebrow">INDEPENDENT DIGITAL AGENCY · 2026</div>
+  <h1>WE BUILD<br>WHAT'S <span class="gradient">NEXT.</span></h1>
+  <p class="hero-copy">We turn ambitious ideas into powerful digital experiences. From high-performing websites to intelligent applications, we build technology that moves businesses forward.</p>
+  <div class="actions">
+   <a href="#work" class="btn">Explore our work ↗</a>
+   <a href="#contact" class="btn btn-outline">Let's talk →</a>
+  </div>
+ </div>
+ <div class="hero-bottom"><span>DESIGN · DEVELOPMENT · INNOVATION</span><span>SCROLL TO EXPLORE ↓</span></div>
+</header>
+
+<div class="marquee"><div class="marquee-inner">
+ <span>WEB DEVELOPMENT ✳</span><span>APP DEVELOPMENT ✳</span><span>AI SOLUTIONS ✳</span><span>DIGITAL EXPERIENCES ✳</span><span>WEB DEVELOPMENT ✳</span><span>APP DEVELOPMENT ✳</span><span>AI SOLUTIONS ✳</span><span>DIGITAL EXPERIENCES ✳</span>
+</div></div>
+
+<main>
+<section id="about">
+ <div class="container about-grid reveal">
+  <div>
+   <div class="section-label">01 / WHO WE ARE</div>
+   <h2 class="section-title">Digital thinking.<br><span class="gradient">Real-world impact.</span></h2>
+   <p class="section-intro">We believe technology should do more than look good. It should solve real problems, create opportunities and help ambitious businesses grow.</p>
+  </div>
+  <div class="about-card">
+   <h3>Built around your next big idea.</h3>
+   <p>ZENVIO is an independent digital agency focused on modern web experiences, applications and intelligent business solutions. We combine design, technology and strategy to create useful digital products.</p>
+   <div class="about-tags"><span class="tag">Creative thinking</span><span class="tag">Modern technology</span><span class="tag">Business focused</span></div>
+  </div>
+ </div>
+</section>
+
+<section id="services">
+ <div class="container reveal">
+  <div class="services-head"><div><div class="section-label">02 / WHAT WE DO</div><h2 class="section-title">Solutions built for <span class="gradient">ambition.</span></h2></div><p class="section-intro">The digital capabilities to take your business further.</p></div>
+  <div class="services-grid">
+   <article class="service"><div class="service-icon">⌘</div><small>01 — DIGITAL PRESENCE</small><h3>Web Development</h3><p>Responsive business websites, e-commerce experiences, landing pages and custom web platforms built around your goals.</p></article>
+   <article class="service"><div class="service-icon">◈</div><small>02 — DIGITAL PRODUCTS</small><h3>App Development</h3><p>Intuitive application experiences, customer portals, booking platforms and practical tools for modern businesses.</p></article>
+   <article class="service"><div class="service-icon">✳</div><small>03 — SMART SYSTEMS</small><h3>AI & Automation</h3><p>AI-powered chatbots, workflow automation and intelligent systems that help teams save time and serve customers.</p></article>
+  </div>
+ </div>
+</section>
+
+<section id="work">
+ <div class="container reveal">
+  <div class="work-head"><div><div class="section-label">03 / SELECTED CONCEPTS</div><h2 class="section-title">Ideas into <span class="gradient">experiences.</span></h2></div><p class="section-intro">Explore our concept projects. These showcase design direction and proposed digital experiences, not client deployments.</p></div>
+  <div class="work-grid">
+   <article class="project"><div class="project-screen"><div class="mock"><div class="mock-bar">● ● ● &nbsp; ZENVIO / COMMERCE</div><div class="mock-body"><strong>SHOP THE<br>FUTURE.</strong><p>Discover products designed for modern living.</p><span class="mock-cta">EXPLORE COLLECTION</span></div></div></div><div class="project-info"><div><h3>Commerce Concept</h3><p>E-commerce / Web Design</p></div><span>CONCEPT 01</span></div></article>
+   <article class="project"><div class="project-screen"><div class="mock"><div class="mock-bar">● ● ● &nbsp; BOOKLY / PLATFORM</div><div class="mock-body"><strong>YOUR TIME.<br>YOUR CONTROL.</strong><p>Smart scheduling for growing businesses.</p><span class="mock-cta">BOOK A SESSION</span></div></div></div><div class="project-info"><div><h3>Booking Platform</h3><p>Web App / Dashboard</p></div><span>CONCEPT 02</span></div></article>
+   <article class="project"><div class="project-screen"><div class="mock"><div class="mock-bar">● ● ● &nbsp; NEXUS / FITNESS</div><div class="mock-body"><strong>MOVE<br>BEYOND.</strong><p>Fitness experiences for everyday progress.</p><span class="mock-cta">GET STARTED</span></div></div></div><div class="project-info"><div><h3>Fitness Experience</h3><p>Mobile App / UI Concept</p></div><span>CONCEPT 03</span></div></article>
+   <article class="project"><div class="project-screen"><div class="mock"><div class="mock-bar">● ● ● &nbsp; INTELLIA / AI</div><div class="mock-body"><strong>WORK<br>SMARTER.</strong><p>Intelligent automation for modern teams.</p><span class="mock-cta">DISCOVER AI</span></div></div></div><div class="project-info"><div><h3>AI Business Suite</h3><p>AI / SaaS Concept</p></div><span>CONCEPT 04</span></div></article>
+  </div>
+ </div>
+</section>
+
+<section id="process">
+ <div class="container reveal">
+  <div class="section-label">04 / HOW WE WORK</div>
+  <h2 class="section-title">From first thought<br>to <span class="gradient">final product.</span></h2>
+  <div class="process-grid">
+   <div class="step"><span class="step-num">STEP 01</span><h3>Discover</h3><p>Understand your goals, customers and business challenges.</p></div>
+   <div class="step"><span class="step-num">STEP 02</span><h3>Plan</h3><p>Define the structure, experience and right technology.</p></div>
+   <div class="step"><span class="step-num">STEP 03</span><h3>Build</h3><p>Develop, test and refine your digital solution.</p></div>
+   <div class="step"><span class="step-num">STEP 04</span><h3>Launch</h3><p>Prepare your product for launch and future improvements.</p></div>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="container reveal">
+  <div class="section-label">05 / OUR PERSPECTIVE</div>
+  <h2 class="section-title">Better technology.<br><span class="gradient">Bigger possibilities.</span></h2>
+  <div class="insight-box"><h3>Your next digital move should be your smartest one.</h3><p>Whether you're launching a business, improving an existing platform or simplifying everyday operations, the right digital solution can change what's possible.</p><a href="#contact" class="btn">Let's build something ↗</a></div>
+ </div>
+</section>
+
+<section class="contact" id="contact">
+ <div class="container reveal">
+  <div class="section-label">06 / START A CONVERSATION</div>
+  <h2 class="section-title">Have an idea?<br><span class="gradient">Let's make it real.</span></h2>
+  <div class="contact-grid">
+   <div><p class="contact-copy">Tell us about your project, your goals and what you're looking to build. We'll get back to you to discuss the next steps.</p><div class="contact-detail">PROJECT ENQUIRIES<br><a href="mailto:haiderium213@gmail.com">haiderium213@gmail.com ↗</a></div></div>
+   <form action="https://formsubmit.co/haiderium213@gmail.com" method="POST">
+    <input type="hidden" name="_subject" value="New ZENVIO Project Inquiry">
+    <input type="hidden" name="_captcha" value="false">
+    <input type="hidden" name="_template" value="table">
+    <input type="hidden" name="_next" value="https://github.com/">
+    <input name="name" placeholder="Your name" required>
+    <input name="email" type="email" placeholder="Your business email" required>
+    <select name="service" required><option value="">What are you looking for?</option><option>Website Development</option><option>App Development</option><option>AI & Automation</option><option>Other</option></select>
+    <textarea name="message" placeholder="Tell us about your project..." required></textarea>
+    <button class="btn" type="submit">Send project enquiry ↗</button>
+   </form>
+  </div>
+ </div>
+</section>
+</main>
+
+<footer><div class="container footer-inner">
+ <a class="logo" href="#">ZENVIO<span>.</span></a>
+ <span>© 2026 ZENVIO. All rights reserved.</span>
+ <div class="footer-links"><a href="#about">About</a><a href="#work">Work</a><a href="admin.html">Admin preview</a></div>
+</div></footer>
+
+<script>
+const menuBtn=document.getElementById('menuBtn');
+const navLinks=document.getElementById('navLinks');
+menuBtn.addEventListener('click',()=>navLinks.classList.toggle('open'));
+navLinks.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>navLinks.classList.remove('open')));
+const observer=new IntersectionObserver(entries=>{
+ entries.forEach(entry=>{
+  if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target)}
+ });
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>
