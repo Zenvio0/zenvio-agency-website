@@ -127,6 +127,7 @@ footer{padding:35px 0}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <nav>
@@ -224,17 +225,25 @@ footer{padding:35px 0}
   <h2 class="section-title">Have an idea?<br><span class="gradient">Let's make it real.</span></h2>
   <div class="contact-grid">
    <div><p class="contact-copy">Tell us about your project, your goals and what you're looking to build. We'll get back to you to discuss the next steps.</p><div class="contact-detail">PROJECT ENQUIRIES<br><a href="mailto:haiderium213@gmail.com">haiderium213@gmail.com ↗</a></div></div>
-   <form action="https://formsubmit.co/haiderium213@gmail.com" method="POST">
-    <input type="hidden" name="_subject" value="New ZENVIO Project Inquiry">
-    <input type="hidden" name="_captcha" value="false">
-    <input type="hidden" name="_template" value="table">
-    <input type="hidden" name="_next" value="https://github.com/">
-    <input name="name" placeholder="Your name" required>
-    <input name="email" type="email" placeholder="Your business email" required>
-    <select name="service" required><option value="">What are you looking for?</option><option>Website Development</option><option>App Development</option><option>AI & Automation</option><option>Other</option></select>
-    <textarea name="message" placeholder="Tell us about your project..." required></textarea>
-    <button class="btn" type="submit">Send project enquiry ↗</button>
-   </form>
+  <form id="contactForm">
+    <input id="clientName" name="name" placeholder="Your name" required maxlength="100">
+
+    <input id="clientEmail" name="email" type="email" placeholder="Your business email" required maxlength="254">
+
+    <select id="clientService" name="service" required>
+        <option value="">What are you looking for?</option>
+        <option>Website Development</option>
+        <option>App Development</option>
+        <option>AI & Automation</option>
+        <option>Other</option>
+    </select>
+
+    <textarea id="clientMessage" name="message" placeholder="Tell us about your project..." required maxlength="5000"></textarea>
+
+    <button class="btn" id="contactSubmit" type="submit">Send project enquiry ↗</button>
+
+    <p id="contactStatus" role="status"></p>
+</form>
   </div>
  </div>
 </section>
@@ -251,12 +260,53 @@ const menuBtn=document.getElementById('menuBtn');
 const navLinks=document.getElementById('navLinks');
 menuBtn.addEventListener('click',()=>navLinks.classList.toggle('open'));
 navLinks.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>navLinks.classList.remove('open')));
+
 const observer=new IntersectionObserver(entries=>{
  entries.forEach(entry=>{
   if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target)}
  });
 },{threshold:.12});
 document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+/* ZENVIO SUPABASE CRM CONNECTION */
+const SUPABASE_URL="https://bohblrqrkkfmqwvtulcs.supabase.co";
+const SUPABASE_KEY="sb_publishable_kDAD7Eo3LDNKO7T18niELA_qGFdq8D9";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const contactForm=document.getElementById('contactForm');
+const contactStatus=document.getElementById('contactStatus');
+const contactSubmit=document.getElementById('contactSubmit');
+
+contactForm.addEventListener('submit',async function(e){
+ e.preventDefault();
+
+ contactSubmit.disabled=true;
+ contactSubmit.textContent="Sending...";
+ contactStatus.textContent="Submitting your enquiry...";
+
+ const lead={
+  client_name:document.getElementById('clientName').value.trim(),
+  email:document.getElementById('clientEmail').value.trim(),
+  service:document.getElementById('clientService').value,
+  notes:document.getElementById('clientMessage').value.trim(),
+  status:"New"
+ };
+
+ try{
+  const {error}=await supabaseClient.from('leads').insert([lead]);
+
+  if(error) throw error;
+
+  contactStatus.textContent="Thank you! Your enquiry has been received. We'll be in touch soon.";
+  contactForm.reset();
+ }catch(error){
+  console.error("ZENVIO enquiry error:",error);
+  contactStatus.textContent="Sorry, your enquiry could not be sent. Please try again or email us directly.";
+ }finally{
+  contactSubmit.disabled=false;
+  contactSubmit.textContent="Send project enquiry ↗";
+ }
+});
 </script>
 </body>
 </html>
