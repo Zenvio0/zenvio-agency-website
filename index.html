@@ -1,317 +1,285 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#08080d">
-<meta name="description" content="ZENVIO is a digital agency building premium websites, applications and intelligent business solutions.">
-<title>ZENVIO® — Digital Experiences That Move Business Forward</title>
+<meta name="theme-color" content="#080710">
+<meta name="description" content="ZENVIO builds practical AI automation systems for home-service businesses. Capture leads, respond faster, book more jobs and follow up automatically.">
+<title>ZENVIO® — AI Systems That Keep Business Moving</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#08080d;--surface:#11121a;--surface2:#171823;--white:#f6f5fa;--muted:#9899a9;--purple:#9878ff;--line:#292936;--max:1240px}
+:root{--bg:#080710;--panel:#11101b;--panel2:#171525;--ink:#f8f7ff;--muted:#a09caf;--purple:#a78bfa;--blue:#67d5ff;--line:#ffffff19;--max:1200px}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;scroll-padding-top:90px}
-body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;overflow-x:hidden}
-a{color:inherit;text-decoration:none}
-button,input,textarea,select{font:inherit}
-button,a{-webkit-tap-highlight-color:transparent}
-.container{width:min(var(--max),86%);margin:auto}
-nav{height:78px;position:fixed;z-index:100;inset:0 0 auto;background:#08080ddd;backdrop-filter:blur(18px);border-bottom:1px solid #ffffff12}
-.nav-inner{height:100%;display:flex;align-items:center;justify-content:space-between;width:min(var(--max),86%);margin:auto}
-.logo{font:700 29px 'Space Grotesk';letter-spacing:-2px}
-.logo span{color:var(--purple)}
-.nav-links{display:flex;align-items:center;gap:30px;color:#b3b1c0;font-size:13px}
-.nav-links a:hover{color:white}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;background:var(--white);color:#090910;padding:14px 22px;border-radius:4px;font-size:12px;font-weight:700;border:1px solid transparent;transition:.3s;cursor:pointer}
-.btn:hover{background:var(--purple);color:white;transform:translateY(-3px)}
-.btn-outline{background:transparent;color:white;border-color:#ffffff38}
-.btn-outline:hover{border-color:var(--purple)}
-.menu-btn{display:none;background:none;color:white;border:0;font-size:25px}
-.hero{min-height:850px;height:100vh;max-height:1100px;display:flex;align-items:center;position:relative;overflow:hidden;padding-top:78px}
-.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 76% 42%,#5535a62c,transparent 35%),radial-gradient(ellipse at 20% 90%,#24204a35,transparent 35%)}
-.orb{position:absolute;width:390px;height:390px;right:10%;top:24%;border-radius:50%;border:1px solid #a38aff30;box-shadow:inset 0 0 80px #8962ff12,0 0 100px #8d68ff16;animation:float 8s ease-in-out infinite}
-.orb:before,.orb:after{content:"";position:absolute;border:1px solid #a38aff30;border-radius:50%;inset:35px}
-.orb:after{inset:75px;background:radial-gradient(circle at 30% 30%,#c3b3ff55,#6c43bf20 35%,transparent 70%);box-shadow:0 0 80px #8962ff44}
-@keyframes float{50%{transform:translateY(-22px) rotate(8deg)}}
-.hero-content{position:relative;z-index:2;padding-top:50px}
-.eyebrow{font-size:10px;letter-spacing:4px;color:#c0aaff;margin-bottom:28px}
-.hero h1{font:700 clamp(62px,9vw,120px)/.91 'Space Grotesk';letter-spacing:-7px;max-width:850px}
-.gradient{background:linear-gradient(100deg,#a88aff,#e2d9ff 55%,#9677ff);background-clip:text;color:transparent}
-.hero-copy{max-width:510px;color:var(--muted);line-height:1.9;font-size:15px;margin:30px 0}
-.actions{display:flex;gap:13px;flex-wrap:wrap}
-.hero-bottom{position:absolute;bottom:45px;left:7%;right:7%;display:flex;justify-content:space-between;color:#818091;font-size:10px;letter-spacing:2px}
-.hero-bottom span:last-child{text-align:right}
-.marquee{overflow:hidden;border-block:1px solid var(--line);padding:23px 0;color:#b3a3ee;font:600 12px 'Space Grotesk';letter-spacing:3px;white-space:nowrap}
-.marquee-inner{display:flex;gap:55px;width:max-content;animation:move 28s linear infinite}
-@keyframes move{to{transform:translateX(-50%)}}
-section{padding:120px 0}
-.section-label{font-size:10px;color:var(--purple);letter-spacing:3px;margin-bottom:22px}
-.section-title{font:600 clamp(37px,5.2vw,68px)/1.08 'Space Grotesk';letter-spacing:-3px;max-width:780px}
-.section-intro{color:var(--muted);line-height:1.9;font-size:14px;max-width:470px;margin-top:23px}
-.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:90px;align-items:center}
-.about-card{background:linear-gradient(135deg,#171421,#101118);border:1px solid #ffffff15;padding:40px;position:relative;overflow:hidden;min-height:300px}
-.about-card:after{content:"Z";position:absolute;font:700 250px 'Space Grotesk';right:10px;bottom:-95px;color:#9878ff13}
-.about-card h3{font:600 28px 'Space Grotesk';position:relative;z-index:1}
-.about-card p{color:var(--muted);font-size:13px;line-height:1.9;margin-top:20px;max-width:370px;position:relative;z-index:1}
-.about-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px;position:relative;z-index:1}
-.tag{font-size:10px;border:1px solid #ffffff20;padding:9px 12px;color:#c5b5ff}
-.services-head,.work-head{display:flex;justify-content:space-between;align-items:end;gap:35px}
-.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:55px}
-.service{padding:33px 27px;background:var(--surface);border:1px solid var(--line);min-height:280px;transition:.4s}
-.service:hover{transform:translateY(-8px);border-color:var(--purple)}
-.service-icon{width:44px;height:44px;border:1px solid #9878ff60;color:#bba8ff;display:grid;place-items:center;font-size:19px}
-.service small{display:block;margin-top:28px;color:var(--purple);letter-spacing:2px;font-size:9px}
-.service h3{font:600 24px 'Space Grotesk';margin:13px 0}
-.service p{color:var(--muted);font-size:12px;line-height:1.9}
-.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:50px}
-.project{background:var(--surface);border:1px solid var(--line);overflow:hidden;transition:.4s}
-.project:hover{transform:translateY(-6px);border-color:#8d70e5}
-.project-screen{height:310px;display:grid;place-items:center;padding:28px;background:radial-gradient(circle at 50% 45%,#48336d,#17141f 65%,#101016)}
-.project:nth-child(2) .project-screen{background:radial-gradient(circle at 50% 45%,#26534f,#101b1b 70%)}
-.project:nth-child(3) .project-screen{background:radial-gradient(circle at 50% 45%,#623d49,#191116 70%)}
-.project:nth-child(4) .project-screen{background:radial-gradient(circle at 50% 45%,#3d4874,#10131f 70%)}
-.mock{width:92%;background:#10121a;border:1px solid #ffffff35;border-radius:8px;padding:15px;box-shadow:0 20px 60px #0009;transform:perspective(900px) rotateY(-7deg)}
-.mock-bar{font-size:8px;color:#888;border-bottom:1px solid #ffffff20;padding-bottom:12px}
-.mock-body{padding:25px 12px}
-.mock-body strong{font:600 27px 'Space Grotesk';display:block}
-.mock-body p{font-size:9px;color:#aaa;margin-top:10px}
-.mock-cta{display:inline-block;background:#9675ff;padding:9px 13px;font-size:8px;margin-top:16px}
-.project-info{padding:23px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.project-info h3{font:600 19px 'Space Grotesk'}
-.project-info p{font-size:11px;color:var(--muted);margin-top:7px}
-.project-info span{font-size:9px;color:var(--purple);letter-spacing:1px}
-.process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:55px}
-.step{border-top:1px solid var(--line);padding-top:24px}
-.step-num{font-size:11px;color:var(--purple)}
-.step h3{font:600 21px 'Space Grotesk';margin:25px 0 12px}
-.step p{color:var(--muted);font-size:12px;line-height:1.9}
-.insight-box{margin-top:45px;padding:65px;background:linear-gradient(110deg,#1a1429,#11121a);border:1px solid #ffffff17}
-.insight-box h3{font:600 clamp(28px,4vw,47px) 'Space Grotesk';max-width:680px}
-.insight-box p{color:var(--muted);max-width:560px;font-size:13px;line-height:1.9;margin:20px 0 28px}
-.contact{background:#0d0e15;border-block:1px solid var(--line)}
-.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:75px;margin-top:48px}
-.contact-copy{color:var(--muted);line-height:1.9;font-size:14px;max-width:430px}
-.contact-detail{margin-top:32px;color:#c6b9ff;font-size:13px}
-form{display:grid;gap:14px}
-input,textarea,select{width:100%;padding:16px;background:#151620;color:white;border:1px solid var(--line);outline:none;border-radius:3px;font-size:13px}
-input:focus,textarea:focus,select:focus{border-color:var(--purple)}
-textarea{min-height:135px;resize:vertical}
-form button{width:100%}
-footer{padding:35px 0}
-.footer-inner{display:flex;justify-content:space-between;align-items:center;gap:20px;color:var(--muted);font-size:11px}
-.footer-links{display:flex;gap:20px}
-.footer-links a:hover{color:white}
-.reveal{opacity:0;transform:translateY(35px);transition:opacity .8s ease,transform .8s ease}
-.reveal.visible{opacity:1;transform:translateY(0)}
-@media(max-width:800px){
- .container,.nav-inner{width:90%}
- .nav-links{display:none;position:absolute;top:78px;left:0;right:0;background:#101019;padding:25px;flex-direction:column;gap:22px;border-bottom:1px solid var(--line)}
- .nav-links.open{display:flex}
- .menu-btn{display:block}
- .nav-cta{display:none}
- .hero{min-height:760px;height:auto;padding:190px 0 130px}
- .hero h1{letter-spacing:-4px}
- .orb{width:240px;height:240px;right:-100px;top:23%;opacity:.6}
- .hero-bottom{bottom:25px}
- section{padding:85px 0}
- .about-grid,.contact-grid{grid-template-columns:1fr;gap:35px}
- .services-head,.work-head{display:block}
- .services-grid{grid-template-columns:1fr}
- .work-grid{grid-template-columns:1fr}
- .process-grid{grid-template-columns:1fr 1fr;gap:30px}
- .insight-box{padding:35px 24px}
- .project-screen{height:260px}
- .footer-inner{flex-direction:column;align-items:flex-start}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(ellipse at 80% 10%,#5633a51c,transparent 38%),radial-gradient(ellipse at 5% 65%,#1e77a313,transparent 35%)}
+a{color:inherit;text-decoration:none}button,input,textarea,select{font:inherit}
+.container{width:min(var(--max),88%);margin:auto}
+.progress{position:fixed;z-index:300;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--purple),var(--blue));box-shadow:0 0 14px var(--purple)}
+nav{height:76px;position:fixed;z-index:200;inset:0 0 auto;background:#090812d9;backdrop-filter:blur(20px);border-bottom:1px solid #ffffff12}
+.nav-inner{height:100%;width:min(var(--max),88%);margin:auto;display:flex;align-items:center;justify-content:space-between}
+.logo{font:700 28px 'Space Grotesk';letter-spacing:-1.8px}.logo b{color:var(--purple)}
+.nav-links{display:flex;gap:28px;color:#c0bdce;font-size:12px}.nav-links a:hover{color:white}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 20px;border-radius:5px;border:1px solid transparent;background:linear-gradient(110deg,#c4b5fd,#8b75ef);color:#100d1c;font-size:12px;font-weight:800;cursor:pointer;transition:transform .25s,box-shadow .25s}
+.btn:hover{transform:translateY(-3px);box-shadow:0 12px 35px #9477f044}
+.btn.ghost{background:#ffffff08;color:white;border-color:#ffffff2a}.btn.ghost:hover{border-color:var(--purple)}
+.menu{display:none;background:none;border:0;color:white;font-size:24px}
+.hero{min-height:850px;height:100svh;max-height:1100px;position:relative;display:flex;align-items:center;padding:110px 0 70px;overflow:hidden}
+.hero-grid{position:absolute;inset:0;opacity:.22;background-image:linear-gradient(#8e7bd21c 1px,transparent 1px),linear-gradient(90deg,#8e7bd21c 1px,transparent 1px);background-size:65px 65px;mask-image:linear-gradient(to bottom,black,transparent 90%)}
+.hero-glow{position:absolute;width:600px;height:600px;right:-70px;top:12%;border-radius:50%;background:radial-gradient(circle,#845de83b,transparent 65%);filter:blur(10px);animation:breathe 7s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.15);opacity:.65}}
+.hero-inner{position:relative;z-index:2;display:grid;grid-template-columns:1.08fr .92fr;align-items:center;gap:25px}
+.kicker,.section-kicker{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#c1aaff}
+.kicker{display:inline-flex;align-items:center;gap:10px;border:1px solid #a78bfa44;background:#a78bfa10;padding:10px 13px;border-radius:99px;margin-bottom:27px}
+.pulse{width:7px;height:7px;border-radius:50%;background:#8ef0c2;box-shadow:0 0 12px #8ef0c2;animation:pulse 1.8s infinite}
+@keyframes pulse{50%{opacity:.35;transform:scale(.7)}}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif}
+.hero h1{font-size:clamp(54px,7vw,94px);line-height:.99;letter-spacing:-5px;max-width:740px}
+.gradient{background:linear-gradient(100deg,#b9a2ff,#e5dcff 45%,#73dcff);background-clip:text;color:transparent}
+.hero-copy{color:var(--muted);font-size:15px;line-height:1.9;max-width:520px;margin:26px 0 30px}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.micro-proof{display:flex;gap:24px;flex-wrap:wrap;margin-top:34px;color:#b6b2c4;font-size:10px;letter-spacing:1px}.micro-proof span:before{content:"✳";color:var(--purple);margin-right:8px}
+.visual{min-height:470px;position:relative;display:grid;place-items:center;perspective:1000px}
+.ring{position:absolute;width:390px;height:390px;border:1px solid #b7a0ff38;border-radius:50%;box-shadow:0 0 100px #885ce51c,inset 0 0 70px #885ce51a;animation:spin 35s linear infinite}
+.ring:before,.ring:after{content:"";position:absolute;inset:35px;border:1px dashed #9a85e94d;border-radius:50%}.ring:after{inset:80px;border-style:solid}
+@keyframes spin{to{transform:rotate(360deg)}}
+.workflow-card{width:min(390px,90%);position:relative;z-index:2;background:linear-gradient(145deg,#1b1830ed,#0f111ceF);border:1px solid #b8a4ff45;border-radius:14px;padding:23px;box-shadow:0 35px 90px #0009;transform:rotateY(-8deg) rotateX(4deg);animation:cardFloat 6s ease-in-out infinite}
+@keyframes cardFloat{50%{transform:translateY(-13px) rotateY(-3deg) rotateX(2deg)}}
+.card-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:17px;border-bottom:1px solid var(--line);font-size:11px;color:#dcd5f4}
+.live{color:#8ef0c2;font-size:9px;letter-spacing:1px}
+.flow-row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #ffffff0c}
+.flow-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:9px;background:#9e80ff1c;color:#c7b5ff;font-size:16px}
+.flow-row strong{display:block;font-size:11px}.flow-row small{display:block;color:#89869b;font-size:9px;margin-top:4px}
+.flow-state{margin-left:auto;color:#8ef0c2;font-size:9px}
+.card-foot{display:flex;justify-content:space-between;color:#9e9aae;font-size:9px;padding-top:17px}
+.float-chip{position:absolute;z-index:3;padding:12px 15px;background:#171528;border:1px solid #ffffff24;border-radius:9px;box-shadow:0 15px 40px #0008;font-size:10px;color:#e6e0ff;animation:chipFloat 5s ease-in-out infinite}
+.float-chip.one{top:12%;right:0}.float-chip.two{bottom:13%;left:0;animation-delay:-2s}
+@keyframes chipFloat{50%{transform:translateY(-9px)}}
+.hero-foot{position:absolute;bottom:28px;left:6%;right:6%;display:flex;justify-content:space-between;color:#777487;font-size:9px;letter-spacing:2px}
+.ticker{border-block:1px solid var(--line);padding:19px 0;overflow:hidden;color:#c7b8ff;font:600 11px 'Space Grotesk';letter-spacing:2px}
+.ticker-track{display:flex;gap:42px;width:max-content;animation:marquee 28s linear infinite}.ticker-track span{white-space:nowrap}
+@keyframes marquee{to{transform:translateX(-50%)}}
+section{padding:115px 0;position:relative}
+.section-kicker{margin-bottom:20px}
+.section-title{font-size:clamp(37px,5.3vw,66px);line-height:1.06;letter-spacing:-3px;max-width:800px}
+.section-copy{max-width:540px;color:var(--muted);font-size:14px;line-height:1.9;margin-top:20px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.statement{font:600 clamp(24px,3vw,39px)/1.25 'Space Grotesk';letter-spacing:-1px}
+.statement span{color:var(--purple)}
+.value-panel{padding:35px;background:linear-gradient(135deg,#1a1730,#11121d);border:1px solid #a78bfa30;border-radius:12px;position:relative;overflow:hidden}
+.value-panel:after{content:"Z";position:absolute;right:4px;bottom:-105px;font:700 250px 'Space Grotesk';color:#a78bfa0b}
+.value-panel h3{font-size:25px;position:relative;z-index:1}.value-panel p{color:var(--muted);font-size:13px;line-height:1.9;margin-top:14px;position:relative;z-index:1}
+.value-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:25px;position:relative;z-index:1}
+.value-list span{font-size:10px;color:#d5caff}.value-list span:before{content:"✓";color:#8ef0c2;margin-right:8px}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:30px}
+.section-head .section-copy{max-width:390px;margin:0}
+.service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:48px}
+.service{background:linear-gradient(145deg,#171525,#10101a);border:1px solid var(--line);border-radius:10px;padding:29px;min-height:270px;transition:border-color .35s,transform .35s,background .35s}
+.service:hover{border-color:#a78bfa88;transform:translateY(-8px);background:#1b1830}
+.service-icon{width:43px;height:43px;border-radius:10px;background:#a78bfa17;border:1px solid #a78bfa48;color:#cbbaff;display:grid;place-items:center;font-size:18px}
+.service small{display:block;margin-top:26px;color:#b9a4ff;font-size:9px;letter-spacing:2px}
+.service h3{font-size:22px;margin:11px 0}.service p{color:var(--muted);font-size:12px;line-height:1.85}
+.demo-section{background:linear-gradient(180deg,transparent,#15112766,transparent);overflow:hidden}
+.demo-shell{margin-top:48px;border:1px solid #a78bfa40;border-radius:14px;background:#0f0e19;padding:28px;box-shadow:0 35px 100px #0006}
+.demo-top{display:flex;justify-content:space-between;gap:15px;align-items:center;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.demo-top strong{font:600 16px 'Space Grotesk'}.demo-top small{color:var(--muted);font-size:10px}
+.demo-content{display:grid;grid-template-columns:.9fr 1.1fr;gap:25px;padding-top:25px}
+.demo-form{display:grid;gap:11px}.demo-form label{font-size:10px;color:#c8c2d8}
+.demo-form input,.demo-form select{width:100%;margin-top:7px;background:#171624;border:1px solid #ffffff20;color:white;padding:13px;border-radius:6px;font-size:12px}
+.demo-form .btn{width:100%;margin-top:5px}
+.demo-result{background:#141321;border:1px solid #ffffff15;border-radius:10px;padding:20px;min-height:270px;display:flex;flex-direction:column;justify-content:center}
+.demo-placeholder{text-align:center;color:#89869a;font-size:12px;line-height:1.8}
+.demo-placeholder .big{font-size:35px;display:block;margin-bottom:12px;color:#bba8ff}
+.demo-steps{display:grid;gap:10px}
+.demo-step{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #ffffff12;border-radius:7px;opacity:.35;transform:translateX(8px);transition:.35s}
+.demo-step.active{opacity:1;transform:none;border-color:#8ef0c255;background:#8ef0c20a}
+.demo-step .num{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:#a78bfa1c;color:#c9b8ff;font-size:10px}
+.demo-step strong{font-size:11px;display:block}.demo-step small{font-size:9px;color:var(--muted);display:block;margin-top:3px}
+.demo-step .tick{margin-left:auto;color:#8ef0c2}
+.demo-note{font-size:9px;color:#858194;margin-top:14px;line-height:1.7}
+.niche-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:40px}
+.niche{padding:22px;background:#12111e;border:1px solid var(--line);border-radius:8px;transition:.3s}
+.niche:hover{border-color:#a78bfa77;transform:translateY(-5px)}
+.niche b{font:600 15px 'Space Grotesk';display:block;margin-bottom:8px}.niche span{font-size:10px;color:var(--muted);line-height:1.6}
+.process{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px}
+.process article{padding-top:20px;border-top:1px solid #a78bfa55}
+.process .n{font-size:10px;color:var(--purple);letter-spacing:2px}
+.process h3{font-size:20px;margin:22px 0 10px}.process p{font-size:11px;color:var(--muted);line-height:1.8}
+.cta-panel{padding:55px;border:1px solid #a78bfa3d;border-radius:13px;background:radial-gradient(ellipse at 100% 0%,#6b4db52e,transparent 50%),linear-gradient(120deg,#17142a,#10111b)}
+.cta-panel h2{font-size:clamp(32px,4.5vw,55px);letter-spacing:-2px;max-width:730px}
+.cta-panel p{color:var(--muted);font-size:13px;line-height:1.9;max-width:560px;margin:18px 0 25px}
+.contact{border-top:1px solid var(--line);background:#0c0b14}
+.contact-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:70px;margin-top:40px}
+.contact-info{color:var(--muted);font-size:13px;line-height:1.9}.contact-info a{color:#c6b6ff}
+.contact-form{display:grid;gap:12px}
+.contact-form input,.contact-form textarea,.contact-form select{width:100%;padding:15px;background:#151421;color:white;border:1px solid #ffffff20;border-radius:5px;outline:none;font-size:12px}
+.contact-form input:focus,.contact-form textarea:focus,.contact-form select:focus{border-color:var(--purple)}
+.contact-form textarea{min-height:120px;resize:vertical}.contact-form button:disabled{opacity:.6;cursor:wait}
+#contactStatus{font-size:11px;color:#a9f0cb;min-height:18px}
+footer{padding:30px 0;border-top:1px solid var(--line)}
+.footer{display:flex;justify-content:space-between;gap:20px;align-items:center;color:#89869a;font-size:10px}
+.footer-links{display:flex;gap:18px}.footer-links a:hover{color:white}
+.reveal{opacity:0;transform:translateY(45px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--delay,0ms)}
+.reveal.visible{opacity:1;transform:none}
+.reveal-left{opacity:0;transform:translateX(-45px);transition:opacity .9s ease,transform .9s ease}.reveal-left.visible{opacity:1;transform:none}
+.reveal-right{opacity:0;transform:translateX(45px);transition:opacity .9s ease,transform .9s ease}.reveal-right.visible{opacity:1;transform:none}
+.scale-in{opacity:0;transform:scale(.92);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}.scale-in.visible{opacity:1;transform:scale(1)}
+@media(max-width:850px){
+ .container,.nav-inner{width:90%}.nav-links{display:none;position:absolute;top:76px;left:0;right:0;padding:22px;background:#100f1b;flex-direction:column;gap:20px;border-bottom:1px solid var(--line)}.nav-links.open{display:flex}.nav-cta{display:none}.menu{display:block}
+ .hero{height:auto;min-height:0;padding:150px 0 110px}.hero-inner{grid-template-columns:1fr}.hero h1{font-size:clamp(53px,12vw,82px);letter-spacing:-3px}.visual{min-height:390px}.ring{width:300px;height:300px}
+ section{padding:85px 0}.split,.demo-content,.contact-grid{grid-template-columns:1fr;gap:30px}.section-head{display:block}.section-head .section-copy{margin-top:17px}
+ .service-grid{grid-template-columns:1fr}.niche-grid{grid-template-columns:1fr 1fr}.process{grid-template-columns:1fr 1fr}.demo-shell{padding:18px}.cta-panel{padding:35px 24px}.hero-foot{bottom:20px}
 }
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+@media(max-width:480px){.niche-grid,.process{grid-template-columns:1fr}.micro-proof{gap:12px}.visual{min-height:350px}.ring{width:260px;height:260px}.float-chip.one{right:-5px}.float-chip.two{left:-5px}.footer{align-items:flex-start;flex-direction:column}.hero-foot{font-size:8px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}.reveal,.reveal-left,.reveal-right,.scale-in{opacity:1;transform:none}}
 </style>
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<nav>
- <div class="nav-inner">
-  <a class="logo" href="#">ZENVIO<span>.</span></a>
-  <div class="nav-links" id="navLinks">
-   <a href="#about">About</a><a href="#services">Services</a><a href="#work">Portfolio</a><a href="#process">Process</a><a href="#contact">Contact</a>
-  </div>
-  <a class="btn nav-cta" href="#contact">Start a project ↗</a>
-  <button class="menu-btn" id="menuBtn" aria-label="Open navigation">☰</button>
- </div>
-</nav>
-
+<div class="progress" id="progress"></div>
+<nav><div class="nav-inner">
+<a class="logo" href="#">ZENVIO<b>.</b></a>
+<div class="nav-links" id="navLinks"><a href="#systems">Systems</a><a href="#demo">Live Demo</a><a href="#industries">Industries</a><a href="#process">How It Works</a><a href="#contact">Contact</a></div>
+<a class="btn nav-cta" href="#contact">Get an automation plan ↗</a>
+<button class="menu" id="menuBtn" aria-label="Open navigation">☰</button>
+</div></nav>
 <header class="hero">
- <div class="hero-bg"></div><div class="orb"></div>
- <div class="container hero-content">
-  <div class="eyebrow">INDEPENDENT DIGITAL AGENCY · 2026</div>
-  <h1>WE BUILD<br>WHAT'S <span class="gradient">NEXT.</span></h1>
-  <p class="hero-copy">We turn ambitious ideas into powerful digital experiences. From high-performing websites to intelligent applications, we build technology that moves businesses forward.</p>
-  <div class="actions">
-   <a href="#work" class="btn">Explore our work ↗</a>
-   <a href="#contact" class="btn btn-outline">Let's talk →</a>
-  </div>
- </div>
- <div class="hero-bottom"><span>DESIGN · DEVELOPMENT · INNOVATION</span><span>SCROLL TO EXPLORE ↓</span></div>
+<div class="hero-grid"></div><div class="hero-glow"></div>
+<div class="container hero-inner">
+<div class="hero-copy-block">
+<div class="kicker"><i class="pulse"></i> AI AUTOMATION FOR SERVICE BUSINESSES</div>
+<h1>YOUR NEXT<br>LEAD SHOULD<br>NEVER <span class="gradient">WAIT.</span></h1>
+<p class="hero-copy">We build practical AI-powered systems that help home-service businesses capture enquiries, respond faster, organize leads and keep follow-ups moving — even after hours.</p>
+<div class="actions"><a class="btn" href="#demo">See the system in action ↗</a><a class="btn ghost" href="#contact">Talk about your workflow</a></div>
+<div class="micro-proof"><span>Lead capture</span><span>Faster responses</span><span>Automated follow-up</span></div>
+</div>
+<div class="visual">
+<div class="ring"></div>
+<div class="float-chip one">✦ New enquiry captured</div><div class="float-chip two">↗ Follow-up queued</div>
+<div class="workflow-card">
+<div class="card-top"><strong>ZENVIO / LEAD FLOW</strong><span class="live">● SYSTEM PREVIEW</span></div>
+<div class="flow-row"><div class="flow-icon">⌕</div><div><strong>New customer enquiry</strong><small>Website form received</small></div><span class="flow-state">READY</span></div>
+<div class="flow-row"><div class="flow-icon">✳</div><div><strong>Instant acknowledgement</strong><small>Customer gets a clear reply</small></div><span class="flow-state">NEXT</span></div>
+<div class="flow-row"><div class="flow-icon">▤</div><div><strong>Lead saved to CRM</strong><small>Details organized for the team</small></div><span class="flow-state">NEXT</span></div>
+<div class="flow-row"><div class="flow-icon">◷</div><div><strong>Follow-up reminder</strong><small>No enquiry left forgotten</small></div><span class="flow-state">NEXT</span></div>
+<div class="card-foot"><span>BUILT AROUND YOUR PROCESS</span><span>01 — 04</span></div>
+</div>
+</div>
+</div>
+<div class="hero-foot"><span>ZENVIO® / INTELLIGENT OPERATIONS</span><span>SCROLL TO EXPLORE ↓</span></div>
 </header>
-
-<div class="marquee"><div class="marquee-inner">
- <span>WEB DEVELOPMENT ✳</span><span>APP DEVELOPMENT ✳</span><span>AI SOLUTIONS ✳</span><span>DIGITAL EXPERIENCES ✳</span><span>WEB DEVELOPMENT ✳</span><span>APP DEVELOPMENT ✳</span><span>AI SOLUTIONS ✳</span><span>DIGITAL EXPERIENCES ✳</span>
-</div></div>
-
+<div class="ticker"><div class="ticker-track"><span>CAPTURE EVERY ENQUIRY ✳</span><span>RESPOND WITHOUT DELAY ✳</span><span>KEEP FOLLOW-UPS MOVING ✳</span><span>LESS ADMIN. MORE SERVICE. ✳</span><span>CAPTURE EVERY ENQUIRY ✳</span><span>RESPOND WITHOUT DELAY ✳</span><span>KEEP FOLLOW-UPS MOVING ✳</span><span>LESS ADMIN. MORE SERVICE. ✳</span></div></div>
 <main>
-<section id="about">
- <div class="container about-grid reveal">
-  <div>
-   <div class="section-label">01 / WHO WE ARE</div>
-   <h2 class="section-title">Digital thinking.<br><span class="gradient">Real-world impact.</span></h2>
-   <p class="section-intro">We believe technology should do more than look good. It should solve real problems, create opportunities and help ambitious businesses grow.</p>
-  </div>
-  <div class="about-card">
-   <h3>Built around your next big idea.</h3>
-   <p>ZENVIO is an independent digital agency focused on modern web experiences, applications and intelligent business solutions. We combine design, technology and strategy to create useful digital products.</p>
-   <div class="about-tags"><span class="tag">Creative thinking</span><span class="tag">Modern technology</span><span class="tag">Business focused</span></div>
-  </div>
- </div>
-</section>
-
-<section id="services">
- <div class="container reveal">
-  <div class="services-head"><div><div class="section-label">02 / WHAT WE DO</div><h2 class="section-title">Solutions built for <span class="gradient">ambition.</span></h2></div><p class="section-intro">The digital capabilities to take your business further.</p></div>
-  <div class="services-grid">
-   <article class="service"><div class="service-icon">⌘</div><small>01 — DIGITAL PRESENCE</small><h3>Web Development</h3><p>Responsive business websites, e-commerce experiences, landing pages and custom web platforms built around your goals.</p></article>
-   <article class="service"><div class="service-icon">◈</div><small>02 — DIGITAL PRODUCTS</small><h3>App Development</h3><p>Intuitive application experiences, customer portals, booking platforms and practical tools for modern businesses.</p></article>
-   <article class="service"><div class="service-icon">✳</div><small>03 — SMART SYSTEMS</small><h3>AI & Automation</h3><p>AI-powered chatbots, workflow automation and intelligent systems that help teams save time and serve customers.</p></article>
-  </div>
- </div>
-</section>
-
-<section id="work">
- <div class="container reveal">
-  <div class="work-head"><div><div class="section-label">03 / SELECTED CONCEPTS</div><h2 class="section-title">Ideas into <span class="gradient">experiences.</span></h2></div><p class="section-intro">Explore our concept projects. These showcase design direction and proposed digital experiences, not client deployments.</p></div>
-  <div class="work-grid">
-   <article class="project"><div class="project-screen"><div class="mock"><div class="mock-bar">● ● ● &nbsp; ZENVIO / COMMERCE</div><div class="mock-body"><strong>SHOP THE<br>FUTURE.</strong><p>Discover products designed for modern living.</p><span class="mock-cta">EXPLORE COLLECTION</span></div></div></div><div class="project-info"><div><h3>Commerce Concept</h3><p>E-commerce / Web Design</p></div><span>CONCEPT 01</span></div></article>
-   <article class="project"><div class="project-screen"><div class="mock"><div class="mock-bar">● ● ● &nbsp; BOOKLY / PLATFORM</div><div class="mock-body"><strong>YOUR TIME.<br>YOUR CONTROL.</strong><p>Smart scheduling for growing businesses.</p><span class="mock-cta">BOOK A SESSION</span></div></div></div><div class="project-info"><div><h3>Booking Platform</h3><p>Web App / Dashboard</p></div><span>CONCEPT 02</span></div></article>
-   <article class="project"><div class="project-screen"><div class="mock"><div class="mock-bar">● ● ● &nbsp; NEXUS / FITNESS</div><div class="mock-body"><strong>MOVE<br>BEYOND.</strong><p>Fitness experiences for everyday progress.</p><span class="mock-cta">GET STARTED</span></div></div></div><div class="project-info"><div><h3>Fitness Experience</h3><p>Mobile App / UI Concept</p></div><span>CONCEPT 03</span></div></article>
-   <article class="project"><div class="project-screen"><div class="mock"><div class="mock-bar">● ● ● &nbsp; INTELLIA / AI</div><div class="mock-body"><strong>WORK<br>SMARTER.</strong><p>Intelligent automation for modern teams.</p><span class="mock-cta">DISCOVER AI</span></div></div></div><div class="project-info"><div><h3>AI Business Suite</h3><p>AI / SaaS Concept</p></div><span>CONCEPT 04</span></div></article>
-  </div>
- </div>
-</section>
-
-<section id="process">
- <div class="container reveal">
-  <div class="section-label">04 / HOW WE WORK</div>
-  <h2 class="section-title">From first thought<br>to <span class="gradient">final product.</span></h2>
-  <div class="process-grid">
-   <div class="step"><span class="step-num">STEP 01</span><h3>Discover</h3><p>Understand your goals, customers and business challenges.</p></div>
-   <div class="step"><span class="step-num">STEP 02</span><h3>Plan</h3><p>Define the structure, experience and right technology.</p></div>
-   <div class="step"><span class="step-num">STEP 03</span><h3>Build</h3><p>Develop, test and refine your digital solution.</p></div>
-   <div class="step"><span class="step-num">STEP 04</span><h3>Launch</h3><p>Prepare your product for launch and future improvements.</p></div>
-  </div>
- </div>
-</section>
-
-<section>
- <div class="container reveal">
-  <div class="section-label">05 / OUR PERSPECTIVE</div>
-  <h2 class="section-title">Better technology.<br><span class="gradient">Bigger possibilities.</span></h2>
-  <div class="insight-box"><h3>Your next digital move should be your smartest one.</h3><p>Whether you're launching a business, improving an existing platform or simplifying everyday operations, the right digital solution can change what's possible.</p><a href="#contact" class="btn">Let's build something ↗</a></div>
- </div>
-</section>
-
-<section class="contact" id="contact">
- <div class="container reveal">
-  <div class="section-label">06 / START A CONVERSATION</div>
-  <h2 class="section-title">Have an idea?<br><span class="gradient">Let's make it real.</span></h2>
-  <div class="contact-grid">
-   <div><p class="contact-copy">Tell us about your project, your goals and what you're looking to build. We'll get back to you to discuss the next steps.</p><div class="contact-detail">PROJECT ENQUIRIES<br><a href="mailto:haiderium213@gmail.com">haiderium213@gmail.com ↗</a></div></div>
-  <form id="contactForm">
-    <input id="clientName" name="name" placeholder="Your name" required maxlength="100">
-
-    <input id="clientEmail" name="email" type="email" placeholder="Your business email" required maxlength="254">
-
-    <select id="clientService" name="service" required>
-        <option value="">What are you looking for?</option>
-        <option>Website Development</option>
-        <option>App Development</option>
-        <option>AI & Automation</option>
-        <option>Other</option>
-    </select>
-
-    <textarea id="clientMessage" name="message" placeholder="Tell us about your project..." required maxlength="5000"></textarea>
-
-    <button class="btn" id="contactSubmit" type="submit">Send project enquiry ↗</button>
-
-    <p id="contactStatus" role="status"></p>
+<section id="why"><div class="container split">
+<div class="reveal-left"><div class="section-kicker">01 / THE OPPORTUNITY</div><h2 class="section-title">Great service starts <span class="gradient">before the job.</span></h2><p class="section-copy">A potential customer fills in a form while your team is on a job, driving or closed for the day. If nobody responds, that opportunity can go cold. ZENVIO helps put a dependable process between the first enquiry and your next conversation.</p></div>
+<div class="value-panel reveal-right"><h3>Make every enquiry easier to handle.</h3><p>We connect the steps your team already performs — capture, acknowledge, organize, notify and follow up — into one practical workflow.</p><div class="value-list"><span>Enquiry capture</span><span>Instant acknowledgement</span><span>Lead organization</span><span>Team notifications</span><span>Follow-up reminders</span><span>Booking hand-off</span></div></div>
+</div></section>
+<section id="systems"><div class="container">
+<div class="section-head reveal"><div><div class="section-kicker">02 / WHAT WE BUILD</div><h2 class="section-title">Small systems.<br><span class="gradient">Meaningful time back.</span></h2></div><p class="section-copy">Start with one frustrating bottleneck. We design and implement a focused automation around the way your business actually works.</p></div>
+<div class="service-grid">
+<article class="service reveal" style="--delay:0ms"><div class="service-icon">⌕</div><small>SYSTEM 01</small><h3>Lead Capture & Routing</h3><p>Collect website enquiries, structure the details and route new opportunities to the right person without manual copying.</p></article>
+<article class="service reveal" style="--delay:100ms"><div class="service-icon">✳</div><small>SYSTEM 02</small><h3>Customer Response</h3><p>Send a timely acknowledgement, gather useful job details and set expectations for the next human response.</p></article>
+<article class="service reveal" style="--delay:200ms"><div class="service-icon">◷</div><small>SYSTEM 03</small><h3>Follow-up Automation</h3><p>Schedule reminders and follow-up tasks so open enquiries do not disappear in a busy inbox.</p></article>
+<article class="service reveal" style="--delay:0ms"><div class="service-icon">▦</div><small>SYSTEM 04</small><h3>CRM & Job Intake</h3><p>Keep customer details, service type, urgency and enquiry history organized in a central workflow.</p></article>
+<article class="service reveal" style="--delay:100ms"><div class="service-icon">▣</div><small>SYSTEM 05</small><h3>Appointment Requests</h3><p>Collect preferred dates and service windows, then hand confirmed requests to your existing calendar or booking process.</p></article>
+<article class="service reveal" style="--delay:200ms"><div class="service-icon">⌁</div><small>SYSTEM 06</small><h3>Owner Notifications</h3><p>Get concise alerts when a new lead arrives, needs attention or is waiting for a team member.</p></article>
+</div>
+</div></section>
+<section class="demo-section" id="demo"><div class="container">
+<div class="reveal"><div class="section-kicker">03 / INTERACTIVE PREVIEW</div><h2 class="section-title">See a lead move<br>through the <span class="gradient">workflow.</span></h2><p class="section-copy">Try a sample plumbing enquiry. This front-end preview demonstrates the proposed steps; it does not send a real message or book a real appointment.</p></div>
+<div class="demo-shell scale-in">
+<div class="demo-top"><div><strong>PLUMBING LEAD RECOVERY / DEMO</strong><br><small>Sample workflow simulation · no external messages sent</small></div><span class="live">● INTERACTIVE PREVIEW</span></div>
+<div class="demo-content">
+<form class="demo-form" id="demoForm">
+<label>Customer name<input id="demoName" value="Jordan Miller" maxlength="70" required></label>
+<label>Service needed<select id="demoService"><option>Emergency leak repair</option><option>Drain cleaning</option><option>Water heater repair</option><option>Pipe installation</option></select></label>
+<label>ZIP / service area<input id="demoZip" value="Austin, TX" maxlength="70" required></label>
+<button class="btn" type="submit" id="runDemo">Run sample workflow ↗</button>
+<p class="demo-note">Demo only. Customer details are processed in this page for visual illustration and are not stored or sent.</p>
 </form>
-  </div>
- </div>
-</section>
+<div class="demo-result" id="demoResult" aria-live="polite"><div class="demo-placeholder"><span class="big">✳</span>Enter sample details and run the workflow to see each step activate.</div></div>
+</div>
+</div>
+</div></section>
+<section id="industries"><div class="container">
+<div class="reveal"><div class="section-kicker">04 / WHO WE HELP</div><h2 class="section-title">Built for teams out<br>in the <span class="gradient">real world.</span></h2><p class="section-copy">Our first focus is home-service companies where enquiries arrive while teams are busy delivering the work.</p></div>
+<div class="niche-grid">
+<div class="niche reveal"><b>Plumbing</b><span>Job enquiries, urgency details and call-back requests.</span></div>
+<div class="niche reveal"><b>HVAC</b><span>Service requests, maintenance leads and seasonal demand.</span></div>
+<div class="niche reveal"><b>Electrical</b><span>New project intake, service categories and lead routing.</span></div>
+<div class="niche reveal"><b>Roofing</b><span>Inspection requests, property details and estimate follow-up.</span></div>
+</div>
+</div></section>
+<section id="process"><div class="container">
+<div class="reveal"><div class="section-kicker">05 / HOW WE WORK</div><h2 class="section-title">One clear problem.<br><span class="gradient">One useful system.</span></h2></div>
+<div class="process">
+<article class="reveal"><span class="n">STEP 01 / DISCOVER</span><h3>Understand</h3><p>We map how enquiries arrive, who handles them and where delays happen.</p></article>
+<article class="reveal"><span class="n">STEP 02 / DESIGN</span><h3>Map the flow</h3><p>We agree on triggers, messages, hand-offs, approvals and what stays human.</p></article>
+<article class="reveal"><span class="n">STEP 03 / BUILD</span><h3>Connect & test</h3><p>We implement the workflow and test it with sample enquiries before launch.</p></article>
+<article class="reveal"><span class="n">STEP 04 / IMPROVE</span><h3>Support</h3><p>We monitor the process, refine edge cases and help your team use it confidently.</p></article>
+</div>
+</div></section>
+<section><div class="container"><div class="cta-panel scale-in"><div class="section-kicker">06 / START WITH ONE BOTTLENECK</div><h2>What happens to a new enquiry when your team is busy?</h2><p>Tell us how customers currently contact you. We will map one practical automation opportunity around your existing process — no pressure and no exaggerated promises.</p><a class="btn" href="#contact">Map my enquiry workflow ↗</a></div></div></section>
+<section class="contact" id="contact"><div class="container">
+<div class="reveal"><div class="section-kicker">07 / TALK TO ZENVIO</div><h2 class="section-title">Let's make the<br>busywork <span class="gradient">flow.</span></h2></div>
+<div class="contact-grid">
+<div class="contact-info reveal-left">Tell us a little about your business and the process you want to improve. We will review your enquiry and discuss a sensible next step.<br><br><strong style="color:#d5caff">ZENVIO / AI AUTOMATION</strong><br>Project enquiries<br><a href="mailto:haiderium213@gmail.com">haiderium213@gmail.com ↗</a></div>
+<form class="contact-form reveal-right" id="contactForm">
+<input id="clientName" name="name" placeholder="Your name" required maxlength="100">
+<input id="clientEmail" name="email" type="email" placeholder="Business email" required maxlength="254">
+<input id="businessName" name="business" placeholder="Business name (optional)" maxlength="150">
+<select id="clientService" name="service" required><option value="">What would you like to automate?</option><option>Lead capture & routing</option><option>Customer response automation</option><option>Follow-up automation</option><option>CRM & job intake</option><option>Appointment request workflow</option><option>Not sure yet — help me identify it</option></select>
+<textarea id="clientMessage" name="message" placeholder="How do you currently handle new customer enquiries?" required maxlength="5000"></textarea>
+<button class="btn" id="contactSubmit" type="submit">Send automation enquiry ↗</button><p id="contactStatus" role="status"></p>
+</form>
+</div>
+</div></section>
 </main>
-
-<footer><div class="container footer-inner">
- <a class="logo" href="#">ZENVIO<span>.</span></a>
- <span>© 2026 ZENVIO. All rights reserved.</span>
- <div class="footer-links"><a href="#about">About</a><a href="#work">Work</a><a href="admin.html">Admin preview</a></div>
-</div></footer>
-
+<footer><div class="container footer"><a class="logo" href="#">ZENVIO<b>.</b></a><span>© 2026 ZENVIO. Built for better business workflows.</span><div class="footer-links"><a href="#systems">Systems</a><a href="#demo">Demo</a><a href="admin.html">Admin</a></div></div></footer>
 <script>
-const menuBtn=document.getElementById('menuBtn');
-const navLinks=document.getElementById('navLinks');
+const menuBtn=document.getElementById('menuBtn'),navLinks=document.getElementById('navLinks');
 menuBtn.addEventListener('click',()=>navLinks.classList.toggle('open'));
 navLinks.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>navLinks.classList.remove('open')));
-
-const observer=new IntersectionObserver(entries=>{
- entries.forEach(entry=>{
-  if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target)}
- });
-},{threshold:.12});
-document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
-
-/* ZENVIO SUPABASE CRM CONNECTION */
+const progress=document.getElementById('progress');
+function updateProgress(){const max=document.documentElement.scrollHeight-innerHeight;progress.style.width=(max>0?scrollY/max*100:0)+'%'}
+addEventListener('scroll',updateProgress,{passive:true});updateProgress();
+const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');revealObserver.unobserve(entry.target)}}),{threshold:.12});
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.scale-in').forEach(el=>revealObserver.observe(el));
+const demoForm=document.getElementById('demoForm'),demoResult=document.getElementById('demoResult'),runDemo=document.getElementById('runDemo');
+const demoStages=[
+ ['Enquiry captured','Sample website form received'],
+ ['Customer acknowledgement prepared','A response is drafted for team review'],
+ ['Lead organized','Service type and area added to lead record'],
+ ['Team follow-up flagged','A call-back task is ready for the business']
+];
+demoForm.addEventListener('submit',async e=>{
+ e.preventDefault();runDemo.disabled=true;runDemo.textContent='Running preview…';
+ const name=document.getElementById('demoName').value.trim(),service=document.getElementById('demoService').value,zip=document.getElementById('demoZip').value.trim();
+ demoResult.innerHTML='<div class="demo-steps" id="demoSteps"></div><p class="demo-note" id="demoSummary"></p>';
+ const list=document.getElementById('demoSteps');
+ demoStages.forEach((s,i)=>{const row=document.createElement('div');row.className='demo-step';row.innerHTML='<span class="num">'+(i+1)+'</span><div><strong>'+s[0]+'</strong><small>'+s[1]+'</small></div><span class="tick">○</span>';list.appendChild(row)});
+ const rows=[...list.children];
+ for(let i=0;i<rows.length;i++){await new Promise(resolve=>setTimeout(resolve,520));rows[i].classList.add('active');rows[i].querySelector('.tick').textContent='✓'}
+ document.getElementById('demoSummary').textContent=name+' · '+service+' · '+zip+'. Preview complete — no real customer message was sent and no appointment was booked.';
+ runDemo.disabled=false;runDemo.textContent='Run sample workflow again ↗';
+});
+/* Existing Supabase CRM connection retained. Only the existing leads table is used. */
 const SUPABASE_URL="https://bohblrqrkkfmqwvtulcs.supabase.co";
 const SUPABASE_KEY="sb_publishable_kDAD7Eo3LDNKO7T18niELA_qGFdq8D9";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
-const contactForm=document.getElementById('contactForm');
-const contactStatus=document.getElementById('contactStatus');
-const contactSubmit=document.getElementById('contactSubmit');
-
-contactForm.addEventListener('submit',async function(e){
- e.preventDefault();
-
- contactSubmit.disabled=true;
- contactSubmit.textContent="Sending...";
- contactStatus.textContent="Submitting your enquiry...";
-
- const lead={
-  client_name:document.getElementById('clientName').value.trim(),
-  email:document.getElementById('clientEmail').value.trim(),
-  service:document.getElementById('clientService').value,
-  notes:document.getElementById('clientMessage').value.trim(),
-  status:"New"
- };
-
- try{
-  const {error}=await supabaseClient.from('leads').insert([lead]);
-
-  if(error) throw error;
-
-  contactStatus.textContent="Thank you! Your enquiry has been received. We'll be in touch soon.";
-  contactForm.reset();
- }catch(error){
-  console.error("ZENVIO enquiry error:",error);
-  contactStatus.textContent="Sorry, your enquiry could not be sent. Please try again or email us directly.";
- }finally{
-  contactSubmit.disabled=false;
-  contactSubmit.textContent="Send project enquiry ↗";
- }
+const contactForm=document.getElementById('contactForm'),contactStatus=document.getElementById('contactStatus'),contactSubmit=document.getElementById('contactSubmit');
+contactForm.addEventListener('submit',async e=>{
+ e.preventDefault();contactSubmit.disabled=true;contactSubmit.textContent='Sending…';contactStatus.textContent='Submitting your enquiry…';
+ const lead={client_name:document.getElementById('clientName').value.trim(),email:document.getElementById('clientEmail').value.trim(),business_name:document.getElementById('businessName').value.trim()||null,service:document.getElementById('clientService').value,notes:document.getElementById('clientMessage').value.trim(),status:'New'};
+ try{const {error}=await supabaseClient.from('leads').insert([lead]);if(error)throw error;contactStatus.textContent="Thank you — your enquiry has been received. We'll be in touch soon.";contactForm.reset()}
+ catch(error){console.error('ZENVIO enquiry error:',error);contactStatus.textContent='Sorry, the enquiry could not be submitted. Please email us directly.'}
+ finally{contactSubmit.disabled=false;contactSubmit.textContent='Send automation enquiry ↗'}
 });
 </script>
-
 <!-- Cloudflare Web Analytics -->
-<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "9ce9091a7f584fd189736f72d32c9235"}'></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"9ce9091a7f584fd189736f72d32c9235"}'></script>
 <!-- End Cloudflare Web Analytics -->
-
 </body>
 </html>
