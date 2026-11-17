@@ -1,6 +1,6 @@
 name = "zenvio-agency"
 main = "_worker.js"
-compatibility_date = "2026-11-18"
+compatibility_date = "2026-11-17"
 
 [assets]
 directory = "."
