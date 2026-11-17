@@ -1,4 +1,4 @@
-# ZENVIO ONE — Foundation, MIRROR, ANTICIPATE and SWARM setup
+# ZENVIO ONE — Complete module deployment guide
 
 Additive implementation. Existing ZENVIO `admin_users`, `leads`, admin login and CRM records are preserved.
 
@@ -7,10 +7,12 @@ Additive implementation. Existing ZENVIO `admin_users`, `leads`, admin login and
 - `mirror.html` — MIRROR business digital twin.
 - `anticipate.html` — ANTICIPATE evidence-based business signal review.
 - `swarm.html` — SWARM controlled specialist workforce and approval queue.
+- `modules.html` — BLACKBOX searchable memory, WHAT IF scenario simulator and EVOLVE outcome tracker.
 - `supabase/migrations/20261117_zenvio_one_foundation.sql` — organization, department, task and event foundation.
 - `supabase/migrations/20261118_zenvio_one_mirror.sql` — MIRROR profile and business records.
 - `supabase/migrations/20261118_zenvio_one_anticipate.sql` — measurements and findings.
 - `supabase/migrations/20261118_zenvio_one_swarm.sql` — specialist plans, approval records and secure approval transaction.
+- `supabase/migrations/20261118_zenvio_one_blackbox_whatif_evolve.sql` — company memory, scenario simulation and measured improvement tables.
 
 ## Database migration order
 In the existing Supabase project SQL Editor, run each migration as a separate query, in this order:
@@ -18,12 +20,14 @@ In the existing Supabase project SQL Editor, run each migration as a separate qu
 2. `20261118_zenvio_one_mirror.sql`
 3. `20261118_zenvio_one_anticipate.sql`
 4. `20261118_zenvio_one_swarm.sql`
+5. `20261118_zenvio_one_blackbox_whatif_evolve.sql`
 
 Confirm these tables exist:
 - `zenvio_organizations`, `zenvio_organization_members`, `zenvio_departments`, `zenvio_tasks`, `zenvio_events`
 - `zenvio_mirror_profiles`, `zenvio_mirror_entities`
 - `zenvio_metric_observations`, `zenvio_anticipate_findings`
 - `zenvio_swarm_runs`, `zenvio_swarm_approvals`
+- `zenvio_blackbox_records`, `zenvio_whatif_scenarios`, `zenvio_evolve_items`
 
 Migrations are additive and enable organization-scoped RLS. Do not disable RLS or expose a service-role key in browser code.
 
@@ -35,6 +39,7 @@ Deploy the updated repository static assets to the existing Cloudflare Worker. K
 - MIRROR: https://zenvio-agency.haiderium213.workers.dev/mirror.html
 - ANTICIPATE: https://zenvio-agency.haiderium213.workers.dev/anticipate.html
 - SWARM: https://zenvio-agency.haiderium213.workers.dev/swarm.html
+- BLACKBOX / WHAT IF / EVOLVE: https://zenvio-agency.haiderium213.workers.dev/modules.html
 
 ## SWARM v0.4
 1. Open `/swarm.html` and select the ZENVIO organization.
@@ -42,6 +47,11 @@ Deploy the updated repository static assets to the existing Cloudflare Worker. K
 3. Submit the plan. No tasks are created until an organization owner/admin approves it.
 4. Approval calls the checked `zenvio_swarm_decide_approval` database function, which validates role and creates the planned tasks atomically. Rejection creates no tasks.
 5. This milestone uses deterministic templates, not a paid AI model. It does not send messages, make payments or execute external actions.
+
+## BLACKBOX, WHAT IF and EVOLVE v0.5
+- BLACKBOX stores searchable text records and source metadata; file upload and automatic email ingestion are not included.
+- WHAT IF calculates scenario arithmetic from user-entered baseline values and assumptions; it is not a predictive model.
+- EVOLVE records recommendations and measured outcomes; it does not automatically change business settings.
 
 ## First ANTICIPATE test
 1. Sign in and select the ZENVIO organization.
