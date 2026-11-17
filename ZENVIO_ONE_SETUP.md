@@ -1,51 +1,49 @@
-# ZENVIO ONE — Foundation setup
+# ZENVIO ONE — Foundation and MIRROR setup
 
-This is an additive foundation integrated into the existing ZENVIO admin project.
+This is an additive extension of the existing ZENVIO project. Existing `admin_users`, `leads`, admin login, and CRM records are not altered or deleted.
 
-## What was added
+## Added files
 
-- `one.html`: authenticated ZENVIO ONE foundation workspace.
-- `supabase/migrations/20261117_zenvio_one_foundation.sql`: additive database migration.
-- `admin.html`: navigation link to ZENVIO ONE.
+- `one.html` — authenticated ZENVIO ONE workspace.
+- `mirror.html` — authenticated MIRROR business digital-twin workspace.
+- `supabase/migrations/20261117_zenvio_one_foundation.sql` — organization, department, task and event foundation.
+- `supabase/migrations/20261118_zenvio_one_mirror.sql` — MIRROR profile and business-record schema.
 
-The existing `admin_users`, `leads`, and existing admin login/CRM code are not modified by the migration. No existing records are deleted or rewritten.
+## Apply database migrations
 
-## Apply the database migration
+In the existing Supabase project, open SQL Editor and run these files as separate queries, in this order:
 
-1. Open the Supabase project already used by ZENVIO.
-2. Open **SQL Editor** and create a new query.
-3. Copy the complete contents of `supabase/migrations/20261117_zenvio_one_foundation.sql`.
-4. Run it once.
-5. Confirm these tables exist:
-   - `zenvio_organizations`
-   - `zenvio_organization_members`
-   - `zenvio_departments`
-   - `zenvio_tasks`
-   - `zenvio_events`
+1. `supabase/migrations/20261117_zenvio_one_foundation.sql`
+2. `supabase/migrations/20261118_zenvio_one_mirror.sql`
 
-The migration enables Row Level Security and organization-scoped policies. Do not disable RLS or put a service-role key in browser code.
+Confirm these tables exist:
+- `zenvio_organizations`
+- `zenvio_organization_members`
+- `zenvio_departments`
+- `zenvio_tasks`
+- `zenvio_events`
+- `zenvio_mirror_profiles`
+- `zenvio_mirror_entities`
 
-## Deploy the static files
+Both migrations are additive and enable organization-scoped Row Level Security. Do not disable RLS or put a service-role key in browser code.
 
-Deploy the repository's updated static assets to the existing Cloudflare Worker/static-assets setup using the same deployment method already used for the agency site.
+## Deploy static assets
 
-After deployment, open:
+Deploy the updated repository static files to the existing Cloudflare Worker/static-assets setup. Keep the existing admin and CRM files.
 
-- Existing admin: `https://zenvio-agency.haiderium213.workers.dev/admin`
-- ZENVIO ONE: `https://zenvio-agency.haiderium213.workers.dev/one.html`
+- Public site: https://zenvio-agency.haiderium213.workers.dev/
+- Existing admin: https://zenvio-agency.haiderium213.workers.dev/admin
+- ZENVIO ONE workspace: https://zenvio-agency.haiderium213.workers.dev/one.html
+- MIRROR: https://zenvio-agency.haiderium213.workers.dev/mirror.html
 
-The Admin navigation now contains a **ZENVIO ONE** link.
-
-## First test
+## First MIRROR test
 
 1. Sign in with an existing Supabase Auth account.
-2. Create an organization (for the first internal test, use ZENVIO).
-3. Add departments such as Sales, Operations, Finance.
-4. Create a task and change its status.
-5. Confirm the activity timeline records the changes.
+2. Create an organization in `one.html` if one does not already exist.
+3. Open `mirror.html` and select that organization.
+4. Save the business profile and add sample records in People, Customers, Suppliers, Offerings, Workflows, Tools, Goals and Assets.
+5. Confirm records remain visible after refresh.
 
-## Current scope / limitations
+MIRROR v0.2 stores structured, user-provided business facts. It does not invent facts, make predictions or autonomously operate the business. ANTICIPATE, SWARM, BLACKBOX, WHAT IF and EVOLVE are later milestones.
 
-This is Foundation v0.1: organization, department, task, and append-only activity tracking. It does not yet contain autonomous AI, predictive analytics, document ingestion, or what-if forecasting. Those modules will be developed after the foundation is deployed and verified.
-
-The browser app uses only the existing Supabase publishable key. Authorization is enforced by Supabase Auth and RLS. Never expose a Supabase service-role key in frontend code.
+The browser app uses only the Supabase publishable key. Authorization is enforced by Supabase Auth and RLS.
