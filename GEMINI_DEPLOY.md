@@ -19,6 +19,7 @@ In Cloudflare Dashboard:
 Do not add a Supabase service-role key. This Worker uses the existing Supabase publishable key plus the signed-in user's bearer token to verify the user's session and organization membership.
 
 ## Models and no-paid-fallback policy
+- These model IDs are listed with Free Tier Standard token pricing in Google's current pricing documentation. Keep the Google AI Studio project on Free Tier and do not link a paid Cloud Billing account. Model selection alone cannot prevent charges if the project is upgraded to a paid tier.
 - Primary: `gemini-3.1-flash-lite`
 - Backup: `gemini-2.5-flash-lite`
 - No paid model, Google Search grounding, Maps, or paid tool is called.
