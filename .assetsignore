@@ -1,0 +1,9 @@
+# Keep repository metadata, deployment config and database migrations private from public asset uploads
+.git/
+.wrangler/
+node_modules/
+supabase/
+*.md
+wrangler.toml
+package.json
+.assetsignore
