@@ -65,7 +65,7 @@ function makePlan(objective){
  };
  return workflows[selected].map(([title,action,priority,evidence])=>({
   title:agents[selected].name+": "+title,
-  description:"Work brief: "+objective+"\\n\\nAction: "+action+"\\n\\nCompletion evidence: "+evidence+"\\n\\nBoundary: Record sources and unknowns. Do not contact people, send messages, spend money or change live systems without separate approval.",
+  description:"Work brief: "+objective+"\n\nAction: "+action+"\n\nCompletion evidence: "+evidence+"\n\nBoundary: Record sources and unknowns. Do not contact people, send messages, spend money or change live systems without separate approval.",
   priority,department_id:dept
  }));
 }
