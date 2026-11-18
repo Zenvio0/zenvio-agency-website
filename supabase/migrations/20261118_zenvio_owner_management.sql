@@ -2,6 +2,8 @@
 -- Additive migration. Existing CRM, admin_users, organizations and records are preserved.
 -- Bootstrap Super Admin: haiderium213@gmail.com (only if this email already exists in auth.users).
 
+begin;
+
 create table if not exists public.zenvio_super_admins (
   user_id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
@@ -57,14 +59,12 @@ as $$
   );
 $$;
 
--- Bootstrap the nominated Super Admin without changing or resetting any existing account.
 insert into public.zenvio_super_admins(user_id, email)
 select u.id, lower(u.email)
 from auth.users u
 where lower(u.email) = lower('haiderium213@gmail.com')
 on conflict (user_id) do update set email = excluded.email;
 
--- Only invited owners and Super Admin can create organizations/workspaces.
 drop policy if exists zenvio_org_insert on public.zenvio_organizations;
 create policy zenvio_org_insert on public.zenvio_organizations
 for insert to authenticated
@@ -127,7 +127,7 @@ begin
     raise exception 'This email is already an active owner';
   end if;
   insert into public.zenvio_owner_invites(email, token_hash, invited_by)
-  values (normalized_email, encode(digest(p_token, 'sha256'), 'hex'), auth.uid())
+  values (normalized_email, encode(extensions.digest(p_token, 'sha256'), 'hex'), auth.uid())
   returning id, expires_at into invite_id, expiry;
   return jsonb_build_object('id', invite_id, 'email', normalized_email, 'expires_at', expiry);
 end;
@@ -144,7 +144,7 @@ begin
   current_email := lower(coalesce(auth.jwt()->>'email', ''));
   select * into inv
   from public.zenvio_owner_invites
-  where token_hash = encode(digest(coalesce(p_token, ''), 'sha256'), 'hex')
+  where token_hash = encode(extensions.digest(coalesce(p_token, ''), 'sha256'), 'hex')
     and revoked_at is null and accepted_at is null and expires_at > now()
   for update;
   if not found then raise exception 'Invitation is invalid, expired, already used or revoked'; end if;
@@ -185,3 +185,5 @@ grant execute on function public.zenvio_super_admin_overview() to authenticated;
 grant execute on function public.zenvio_create_owner_invite(text, text) to authenticated;
 grant execute on function public.zenvio_accept_owner_invite(text) to authenticated;
 grant execute on function public.zenvio_revoke_owner_invite(uuid) to authenticated;
+
+commit;
