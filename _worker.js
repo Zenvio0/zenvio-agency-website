@@ -1,5 +1,6 @@
 const SUPABASE_URL = "https://bohblrqrkkfmqwvtulcs.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_kDAD7Eo3LDNKO7T18niELA_qGFdq8D9";
+const ANT_LING_MODEL = "Ling-3.2-flash";
 const PRIMARY_MODEL = "gemini-3.1-flash-lite";
 const BACKUP_MODEL = "gemini-2.5-flash-lite";
 const MAX_PROMPT_CHARS = 12000;
@@ -73,6 +74,34 @@ async function callGemini(model, apiKey, prompt) {
   if (!answer) return { ok: false, status: 502, body: "The model returned no text." };
   return { ok: true, answer };
 }
+async function callAntLing(apiKey, systemPrompt, message) {
+  const response = await fetch("https://api.ant-ling.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "authorization": "Bearer " + apiKey
+    },
+    body: JSON.stringify({
+      model: ANT_LING_MODEL,
+      stream: false,
+      temperature: 0.35,
+      max_tokens: 1800,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message }
+      ]
+    })
+  });
+  const raw = await response.text();
+  if (!response.ok) return { ok: false, status: response.status, body: raw.slice(0, 1800) };
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch { return { ok: false, status: 502, body: "Invalid Ant Ling response." }; }
+  const answer = parsed?.choices?.[0]?.message?.content;
+  const textAnswer = typeof answer === "string" ? answer.trim() :
+    Array.isArray(answer) ? answer.map(part => part?.text || "").join("").trim() : "";
+  if (!textAnswer) return { ok: false, status: 502, body: "Ant Ling returned no text." };
+  return { ok: true, answer: textAnswer };
+}
 async function handleIntelligence(request, env) {
   let body;
   try { body = await request.json(); } catch { return json({ error: "Request body must be valid JSON." }, 400); }
@@ -92,20 +121,25 @@ async function handleIntelligence(request, env) {
     "Do not send messages, make payments, change records or execute consequential actions. " +
     "Give practical, structured answers. The selected workspace module is: " + moduleName + ".";
   const prompt = systemPrompt + "\n\nUser request:\n" + message;
-  const apiKey = env.GEMINI_API_KEY;
-  if (!apiKey) return json({ answer: localFallback(message, moduleName), mode: "local_fallback", reason: "Gemini secret not configured." });
-  const models = [PRIMARY_MODEL, BACKUP_MODEL];
   const failures = [];
-  for (const model of models) {
-    const result = await callGemini(model, apiKey, prompt);
-    if (result.ok) return json({ answer: result.answer, mode: "gemini", model, fallback: model !== PRIMARY_MODEL });
-    failures.push({ model, status: result.status });
-    if (!isQuotaOrTemporary(result.status, result.body)) break;
+  if (env.ANT_LING_API_KEY) {
+    const ling = await callAntLing(env.ANT_LING_API_KEY, systemPrompt, message);
+    if (ling.ok) return json({ answer: ling.answer, mode: "ant_ling", model: ANT_LING_MODEL, fallback: false });
+    failures.push({ provider: "ant_ling", model: ANT_LING_MODEL, status: ling.status });
+  }
+  const geminiKey = env.GEMINI_API_KEY;
+  if (geminiKey) {
+    for (const model of [PRIMARY_MODEL, BACKUP_MODEL]) {
+      const result = await callGemini(model, geminiKey, prompt);
+      if (result.ok) return json({ answer: result.answer, mode: "gemini", model, fallback: true, attempted: failures });
+      failures.push({ provider: "gemini", model, status: result.status });
+      if (!isQuotaOrTemporary(result.status, result.body)) break;
+    }
   }
   return json({
     answer: localFallback(message, moduleName),
     mode: "local_fallback",
-    reason: "Free Gemini models unavailable or quota exhausted.",
+    reason: "Ant Ling and Gemini are unavailable or their secrets are not configured.",
     attempted: failures
   });
 }
@@ -123,7 +157,7 @@ export default {
         headers: { "access-control-allow-origin": origin || url.origin, "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "authorization, content-type", "vary": "Origin" }
       });
       if (url.pathname === "/api/health" && request.method === "GET") {
-        return json({ service: "ZENVIO ONE Intelligence", status: "online", ai: env.GEMINI_API_KEY ? "configured" : "local_fallback", primary: PRIMARY_MODEL, backup: BACKUP_MODEL, billingPolicy: "free-tier models only; no paid fallback" });
+        return json({ service: "ZENVIO ONE Intelligence", status: "online", ai: env.ANT_LING_API_KEY ? "ant_ling_primary" : (env.GEMINI_API_KEY ? "gemini_primary" : "local_fallback"), primary: ANT_LING_MODEL, backup: PRIMARY_MODEL + " → " + BACKUP_MODEL, providers: { antLing: !!env.ANT_LING_API_KEY, gemini: !!env.GEMINI_API_KEY } });
       }
       if (url.pathname === "/api/intelligence" && request.method === "POST") {
         try { return await handleIntelligence(request, env); }
