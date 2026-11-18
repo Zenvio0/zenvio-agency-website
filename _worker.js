@@ -105,33 +105,51 @@ async function callGemini(model, apiKey, prompt) {
   if (!answer) return { ok: false, status: 502, body: "The model returned no text." };
   return { ok: true, answer };
 }
+function safeProviderDiagnostic(result) {
+  const raw = String(result?.body || "").slice(0, 900);
+  let detail = raw;
+  try {
+    const parsed = JSON.parse(raw);
+    detail = parsed?.error?.message || parsed?.message || parsed?.error?.type || raw;
+  } catch {}
+  detail = String(detail || "No additional error detail was returned.")
+    .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+    .replace(/[A-Za-z0-9_-]{32,}/g, "[redacted]")
+    .replace(/\s+/g, " ")
+    .slice(0, 280);
+  return { status: Number(result?.status) || 0, detail };
+}
 async function callAntLing(apiKey, systemPrompt, message) {
-  const response = await fetch("https://api.ant-ling.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "authorization": "Bearer " + apiKey
-    },
-    body: JSON.stringify({
-      model: ANT_LING_MODEL,
-      stream: false,
-      temperature: 0.35,
-      max_tokens: 1800,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: message }
-      ]
-    })
-  });
-  const raw = await response.text();
-  if (!response.ok) return { ok: false, status: response.status, body: raw.slice(0, 1800) };
-  let parsed;
-  try { parsed = JSON.parse(raw); } catch { return { ok: false, status: 502, body: "Invalid Ant Ling response." }; }
-  const answer = parsed?.choices?.[0]?.message?.content;
-  const textAnswer = typeof answer === "string" ? answer.trim() :
-    Array.isArray(answer) ? answer.map(part => part?.text || "").join("").trim() : "";
-  if (!textAnswer) return { ok: false, status: 502, body: "Ant Ling returned no text." };
-  return { ok: true, answer: textAnswer };
+  try {
+    const response = await fetch("https://api.ant-ling.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": "Bearer " + apiKey
+      },
+      body: JSON.stringify({
+        model: ANT_LING_MODEL,
+        stream: false,
+        temperature: 0.35,
+        max_tokens: 1800,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ]
+      })
+    });
+    const raw = await response.text();
+    if (!response.ok) return { ok: false, status: response.status, body: raw.slice(0, 1800) };
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { return { ok: false, status: 502, body: "Invalid Ant Ling response." }; }
+    const answer = parsed?.choices?.[0]?.message?.content;
+    const textAnswer = typeof answer === "string" ? answer.trim() :
+      Array.isArray(answer) ? answer.map(part => part?.text || "").join("").trim() : "";
+    if (!textAnswer) return { ok: false, status: 502, body: "Ant Ling returned no text." };
+    return { ok: true, answer: textAnswer };
+  } catch (error) {
+    return { ok: false, status: 0, body: "Network error: " + String(error?.message || error).slice(0, 300) };
+  }
 }
 async function handleSwarmPlan(request, env) {
   let body;
@@ -172,9 +190,13 @@ async function handleSwarmPlan(request, env) {
   let generated = null;
   let provider = "ant_ling";
   let model = ANT_LING_MODEL;
+  let antLingDiagnostic = null;
   if (env.ANT_LING_API_KEY) {
     const result = await callAntLing(env.ANT_LING_API_KEY, systemPrompt, userPrompt);
     if (result.ok) generated = result.answer;
+    else antLingDiagnostic = safeProviderDiagnostic(result);
+  } else {
+    antLingDiagnostic = { status: 0, detail: "ANT_LING_API_KEY is not configured on this Worker." };
   }
   if (!generated && env.GEMINI_API_KEY) {
     provider = "gemini";
@@ -184,7 +206,10 @@ async function handleSwarmPlan(request, env) {
       if (!isQuotaOrTemporary(result.status, result.body)) break;
     }
   }
-  if (!generated) return json({ error: "AI planning providers are unavailable. Try again later." }, 503);
+  if (!generated) return json({
+    error: "AI planning providers are unavailable. Try again later.",
+    antLingDiagnostic
+  }, 503);
   let parsed;
   try {
     const first = generated.indexOf("{");
@@ -207,7 +232,10 @@ async function handleSwarmPlan(request, env) {
     }
     tasks.push({ title, description, priority, department_id: departmentId });
   }
-  return json({ tasks, provider, model, contextLoaded: !!businessContext, requiresApproval: true });
+  return json({
+    tasks, provider, model, contextLoaded: !!businessContext, requiresApproval: true,
+    antLingDiagnostic: provider === "gemini" ? antLingDiagnostic : null
+  });
 }
 async function handleIntelligence(request, env) {
   let body;
