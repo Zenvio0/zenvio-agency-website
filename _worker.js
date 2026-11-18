@@ -55,6 +55,37 @@ function localFallback(message, moduleName) {
     "Module: " + (moduleName || "general") + " · Words received: " + words.length
   ].join("\n");
 }
+async function fetchBusinessContext(accessToken, organizationId) {
+  const params = new URLSearchParams({
+    select: "record_type,title,content,source_label,source_date",
+    organization_id: "eq." + organizationId,
+    order: "created_at.desc",
+    limit: "20"
+  });
+  const response = await fetch(SUPABASE_URL + "/rest/v1/zenvio_blackbox_records?" + params.toString(), {
+    headers: { apikey: SUPABASE_PUBLISHABLE_KEY, authorization: "Bearer " + accessToken }
+  });
+  if (!response.ok) {
+    console.error("ZENVIO BUSINESS CONTEXT LOAD FAILED:", response.status, (await response.text()).slice(0, 500));
+    return "";
+  }
+  const rows = await response.json();
+  if (!Array.isArray(rows) || rows.length === 0) return "";
+  let total = 0;
+  const sections = [];
+  for (const row of rows) {
+    const section = [
+      "[" + (row.record_type || "record") + "] " + (row.title || "Untitled"),
+      row.source_label ? "Source: " + row.source_label : "",
+      row.source_date ? "Date: " + row.source_date : "",
+      row.content || ""
+    ].filter(Boolean).join("\n");
+    if (total + section.length > 10000) break;
+    sections.push(section);
+    total += section.length;
+  }
+  return sections.join("\n\n---\n\n");
+}
 async function callGemini(model, apiKey, prompt) {
   const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" +
     encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(apiKey);
@@ -113,14 +144,18 @@ async function handleIntelligence(request, env) {
   const membership = await verifyMember(request, organizationId);
   if (!membership.ok) return json({ error: membership.error }, membership.status);
 
+  const accessToken = (request.headers.get("authorization") || "").slice(7);
+  const businessContext = await fetchBusinessContext(accessToken, organizationId);
   const systemPrompt = "You are ZENVIO ONE, a careful business intelligence assistant. " +
     "Help with business planning, operations, finance, sales, marketing, customer support, strategy and analysis. " +
     "Never invent company facts, metrics, sources, events or research. Clearly label assumptions and unknowns. " +
-    "If the user has not supplied company data, ask for it or give a general framework. " +
-    "Do not claim to have accessed live websites, email, databases or external systems. " +
+    "Use the organization knowledge supplied below as user-provided business context; it may be incomplete or outdated. " +
+    "If relevant details are missing, ask for them or state assumptions. " +
+    "Do not claim to have accessed live websites, email or external systems. " +
     "Do not send messages, make payments, change records or execute consequential actions. " +
-    "Give practical, structured answers. The selected workspace module is: " + moduleName + ".";
-  const prompt = systemPrompt + "\n\nUser request:\n" + message;
+    "Give practical, structured answers. The selected workspace module is: " + moduleName + "." +
+    (businessContext ? "\\n\\nZENVIO ORGANIZATION KNOWLEDGE (BLACKBOX):\\n" + businessContext : "\\n\\nNo BLACKBOX business profile is saved for this organization yet.");
+  const prompt = systemPrompt + "\\n\\nUser request:\\n" + message;
   const failures = [];
   if (env.ANT_LING_API_KEY) {
     const ling = await callAntLing(env.ANT_LING_API_KEY, systemPrompt, message);
