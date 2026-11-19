@@ -289,7 +289,6 @@ set name = excluded.name,
 
 -- Registry distinguishes working modules from configuration-only and planned modules.
 create table if not exists public.zenvio_module_registry (
-create table if not exists public.zenvio_module_registry (
   module_key text primary key check (module_key ~ '^[a-z][a-z0-9_]{1,50}$'),
   display_name text not null,
   description text not null default '',
