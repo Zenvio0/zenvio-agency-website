@@ -356,6 +356,47 @@ for all to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']))
 with check (public.zenvio_has_role(organization_id, array['owner','admin']));
 
+-- Enforce module registry status at the database boundary, not only in the UI.
+create or replace function public.zenvio_enforce_workspace_module_status()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare module_status text;
+begin
+  select implementation_status into module_status
+  from public.zenvio_module_registry
+  where module_key = new.module_key;
+
+  if module_status is null then
+    raise exception 'Unknown ZENVIO module: %', new.module_key;
+  end if;
+
+  if new.source = 'super_admin' and not public.zenvio_is_super_admin() then
+    raise exception 'Only Super Admin may assign the super_admin module source';
+  end if;
+
+  if module_status = 'planned' then
+    if new.source = 'industry_default' then
+      new.enabled := false;
+    elsif new.enabled then
+      raise exception 'This module is planned and cannot be enabled yet';
+    end if;
+  end if;
+
+  return new;
+end;
+$;
+
+drop trigger if exists zenvio_workspace_module_status_guard on public.zenvio_workspace_modules;
+create trigger zenvio_workspace_module_status_guard
+before insert or update of module_key, enabled, source
+on public.zenvio_workspace_modules
+for each row execute function public.zenvio_enforce_workspace_module_status();
+
+revoke all on function public.zenvio_enforce_workspace_module_status() from public, anon;
+
 drop policy if exists zenvio_industry_suggestions_submit on public.zenvio_industry_suggestions;
 create policy zenvio_industry_suggestions_submit
 on public.zenvio_industry_suggestions
@@ -462,6 +503,36 @@ create trigger zenvio_org_industry_defaults
 after insert or update of industry_node_id, sub_industry_node_id, business_type
 on public.zenvio_organizations
 for each row execute function public.zenvio_apply_industry_workspace_defaults();
+
+-- Backfill workspace profiles and industry defaults for organizations created before this migration.
+insert into public.zenvio_workspace_profiles (
+  organization_id, industry_id, sub_industry_id, business_type,
+  aria_profile, knowledge_profile, experience_profile, dashboard_layout
+)
+select
+  o.id, i.id, si.id,
+  coalesce(nullif(trim(o.business_type), ''), 'General Business'),
+  coalesce(si.aria_profile, i.aria_profile, '{"tone":"professional","mode":"industry_assistant"}'::jsonb),
+  coalesce(si.knowledge_profile, i.knowledge_profile, '{"guidance":"Use approved company information only.","sources":[]}'::jsonb),
+  coalesce(si.experience_profile, i.experience_profile, '{"environment":"none","theme":"dark"}'::jsonb),
+  coalesce(si.dashboard_layout, i.dashboard_layout, '{"version":1,"layout":"industry_default","widgets":[]}'::jsonb)
+from public.zenvio_organizations o
+left join public.zenvio_industry_catalog i
+  on i.id = o.industry_node_id and i.level = 'industry'
+left join public.zenvio_industry_catalog si
+  on si.id = o.sub_industry_node_id and si.level = 'sub_industry' and si.parent_id = i.id
+on conflict (organization_id) do nothing;
+
+insert into public.zenvio_workspace_modules (organization_id, module_key, enabled, source)
+select o.id, module_key, true, 'industry_default'
+from public.zenvio_organizations o
+left join public.zenvio_industry_catalog i on i.id = o.industry_node_id
+left join public.zenvio_industry_catalog si on si.id = o.sub_industry_node_id
+cross join lateral unnest(coalesce(
+  si.default_modules, i.default_modules,
+  array['mirror','anticipate','swarm','blackbox','what_if','evolve','aria','crm','analytics']::text[]
+)) as module_key
+on conflict (organization_id, module_key) do nothing;
 
 
 create or replace function public.zenvio_guard_workspace_profile_taxonomy_change()
