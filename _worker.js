@@ -390,7 +390,7 @@ async function privateCloudStart(request, env, url) {
     nonce: randomHex(16)
   };
   const encryptedState = await encryptPrivateCloud(stateRecord, env);
-  const state = bytesToB64(new TextEncoder().encode(encryptedState)).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+  const state = bytesToB64(new TextEncoder().encode(encryptedState)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
     redirect_uri: privateCloudRedirect(url.origin),
