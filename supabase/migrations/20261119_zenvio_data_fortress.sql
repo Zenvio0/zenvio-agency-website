@@ -62,7 +62,7 @@ create table if not exists public.zenvio_backup_runs (
   safe_error_message text,
   created_at timestamptz not null default now(),
   foreign key (organization_id, destination_id)
-    references public.zenvio_backup_destinations(organization_id, id) on delete set null
+    references public.zenvio_backup_destinations(organization_id, id) on delete restrict
 );
 
 create table if not exists public.zenvio_restore_tests (
@@ -79,7 +79,7 @@ create table if not exists public.zenvio_restore_tests (
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   foreign key (organization_id, backup_run_id)
-    references public.zenvio_backup_runs(organization_id, id) on delete set null
+    references public.zenvio_backup_runs(organization_id, id) on delete restrict
 );
 
 create index if not exists zenvio_backup_destinations_org_idx
@@ -106,10 +106,10 @@ alter table public.zenvio_backup_destinations enable row level security;
 alter table public.zenvio_backup_runs enable row level security;
 alter table public.zenvio_restore_tests enable row level security;
 
-revoke all on public.zenvio_backup_policies from anon;
-revoke all on public.zenvio_backup_destinations from anon;
-revoke all on public.zenvio_backup_runs from anon;
-revoke all on public.zenvio_restore_tests from anon;
+revoke all on public.zenvio_backup_policies from anon, authenticated;
+revoke all on public.zenvio_backup_destinations from anon, authenticated;
+revoke all on public.zenvio_backup_runs from anon, authenticated;
+revoke all on public.zenvio_restore_tests from anon, authenticated;
 
 drop policy if exists zenvio_backup_policy_owner_read on public.zenvio_backup_policies;
 create policy zenvio_backup_policy_owner_read on public.zenvio_backup_policies
@@ -165,8 +165,13 @@ for select to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']));
 
 -- Browser clients may read control metadata but cannot create or alter backup results.
-grant select, insert, update on public.zenvio_backup_policies to authenticated;
-grant select, insert, update, delete on public.zenvio_backup_destinations to authenticated;
+grant select on public.zenvio_backup_policies to authenticated;
+grant insert (organization_id, schedule_cron, timezone, daily_retention_days, weekly_retention_weeks, monthly_retention_months, immutable_retention_days, rpo_target_minutes, rto_target_minutes, backup_scope, created_by) on public.zenvio_backup_policies to authenticated;
+grant update (schedule_cron, timezone, daily_retention_days, weekly_retention_weeks, monthly_retention_months, immutable_retention_days, rpo_target_minutes, rto_target_minutes, backup_scope) on public.zenvio_backup_policies to authenticated;
+grant select on public.zenvio_backup_destinations to authenticated;
+grant insert (organization_id, provider, label, bucket_name, endpoint_host, region, credential_reference, created_by) on public.zenvio_backup_destinations to authenticated;
+grant update (label, bucket_name, endpoint_host, region, credential_reference) on public.zenvio_backup_destinations to authenticated;
+grant delete on public.zenvio_backup_destinations to authenticated;
 grant select on public.zenvio_backup_runs to authenticated;
 grant select on public.zenvio_restore_tests to authenticated;
 
