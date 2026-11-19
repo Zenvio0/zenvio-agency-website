@@ -65,7 +65,7 @@ create table if not exists public.zenvio_workspace_profiles (
 
 create table if not exists public.zenvio_workspace_modules (
   organization_id uuid not null references public.zenvio_organizations(id) on delete cascade,
-  module_key text not null check (module_key ~ '^[a-z][a-z0-9_]{1,50}$'),
+  module_key text not null check (module_key ~ '^[a-z0-9][a-z0-9_]{1,50}$'),
   enabled boolean not null default true,
   source text not null default 'industry_default'
     check (source in ('industry_default','owner_enabled','owner_disabled','super_admin')),
@@ -289,7 +289,7 @@ set name = excluded.name,
 
 -- Registry distinguishes working modules from configuration-only and planned modules.
 create table if not exists public.zenvio_module_registry (
-  module_key text primary key check (module_key ~ '^[a-z][a-z0-9_]{1,50}$'),
+  module_key text primary key check (module_key ~ '^[a-z0-9][a-z0-9_]{1,50}$'),
   display_name text not null,
   description text not null default '',
   implementation_status text not null default 'planned'
