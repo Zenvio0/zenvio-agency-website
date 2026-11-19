@@ -37,7 +37,7 @@
    </details>
    <div class="field"><label>Active organization</label><select id="orgSelect"><option value="">Loading organizations…</option></select></div><div id="orgError" class="error"></div>
   </section>
-  <section class="card" style="grid-column:1/-1"><h2>Industry workspace configuration</h2><div id="industryWorkspaceSummary" class="empty">Create or select a workspace to view its industry configuration.</div><div id="industryWidgetList" class="grid"></div><div id="moduleList" class="list"></div>
+  <section class="card" style="grid-column:1/-1"><h2>Industry workspace configuration</h2><div id="industryWorkspaceSummary" class="empty">Create or select a workspace to view its industry configuration.</div><div id="industryWidgetList" class="grid"></div><div id="moduleList" class="list"></div><h3 style="margin-top:16px">Optional modules</h3><div id="availableModuleList" class="list"></div>
    <details style="margin-top:16px"><summary class="muted" style="cursor:pointer">Request a change to this business's industry</summary><form id="industryChangeForm"><div class="field"><label>New industry</label><select id="changeIndustry" required><option value="">Choose industry</option></select></div><div class="field"><label>New sub-industry</label><select id="changeSubIndustry" required disabled><option value="">Choose an industry first</option></select></div><div class="field"><label>Business type</label><input id="changeBusinessType" maxlength="140" required placeholder="e.g. Property Agency"></div><div class="field"><label>Reason for change</label><input id="changeReason" maxlength="500" placeholder="Optional explanation"></div><button class="btn secondary">Submit change for review</button><div id="industryChangeMessage" class="muted small"></div></form></details>
    <div id="industryChangeStatus" class="muted small"></div></section>
   <section class="card"><h2>2. Add a department</h2><form id="deptForm"><div class="field"><label>Department name</label><input id="deptName" maxlength="100" placeholder="e.g. Operations" required></div><div class="field"><label>Description</label><input id="deptDesc" placeholder="What this team is responsible for"></div><button class="btn">Add department</button></form><div id="deptList" class="list"><div class="empty">Select an organization first.</div></div><div id="deptError" class="error"></div></section>
@@ -119,6 +119,14 @@ $("orgForm").addEventListener("submit",async e=>{
 $("orgSelect").addEventListener("change",async()=>{activeOrg=$("orgSelect").value;await loadOrgData();});
 async function logEvent(type,entity,id,summary,metadata={}){const {error}=await db.from("zenvio_events").insert({organization_id:activeOrg,actor_user_id:session.user.id,event_type:type,entity_type:entity,entity_id:id,summary,metadata});if(error)console.warn("Event logging:",error.message);}
 async function loadOrgData(){if(!activeOrg)return;await Promise.all([loadDepartments(),loadTasks(),loadEvents(),loadIndustryWorkspace()]);}
+window.setWorkspaceModule=async(moduleKey,enabled)=>{
+ const {error}=await db.from("zenvio_workspace_modules").upsert({
+  organization_id:activeOrg,module_key:moduleKey,enabled,
+  source:enabled?"owner_enabled":"owner_disabled",configuration:{}
+ },{onConflict:"organization_id,module_key"});
+ if(error){showError("industryError",error);return;}
+ await loadIndustryWorkspace();
+};
 async function loadIndustryWorkspace(){
  const [{data:profile,error:profileError},{data:modules,error:moduleError},{data:requests,error:requestError},{data:registry,error:registryError}] = await Promise.all([
   db.from("zenvio_workspace_profiles").select("business_type,company_size,website_url,location,description,aria_profile,industry_id,sub_industry_id,dashboard_layout").eq("organization_id",activeOrg).maybeSingle(),
@@ -134,7 +142,21 @@ async function loadIndustryWorkspace(){
  const widgets=profile?.dashboard_layout?.widgets||[];
  $("industryWidgetList").innerHTML=widgets.map(w=>'<div class="card"><div class="module">'+esc(industry.toUpperCase())+'</div><div class="metric" style="font-size:16px">'+esc(String(w).replaceAll("_"," ").toUpperCase())+'</div><div class="muted small">Industry dashboard slot · connect its operational data source to activate</div></div>').join("");
  const registryMap=new Map((registry||[]).map(x=>[x.module_key,x]));
- $("moduleList").innerHTML=(modules||[]).map(m=>{const meta=registryMap.get(m.module_key)||{};const status=meta.implementation_status||"unregistered";return '<div class="item"><div><b>'+esc(meta.display_name||m.module_key.replaceAll("_"," ").toUpperCase())+'</b><div class="muted small">'+esc(meta.description||"Workspace module configuration")+"</div></div><span class='pill'>"+(m.enabled?"Configured":"Disabled")+" · "+esc(status.replaceAll("_"," "))+"</span></div>";}).join("")||'<div class="empty">No modules configured. Apply the industry workspace migration.</div>';
+ const activeRows=(modules||[]).map(m=>{
+  const meta=registryMap.get(m.module_key)||{},status=meta.implementation_status||"unregistered";
+  const canToggle=status!=="planned";
+  const action=canToggle?'<button class="btn secondary small" data-module-key="'+esc(m.module_key)+'" data-module-enabled="'+String(!m.enabled)+'">'+(m.enabled?"Disable":"Enable")+'</button>':"";
+  return '<div class="item"><div><b>'+esc(meta.display_name||m.module_key.replaceAll("_"," ").toUpperCase())+'</b><div class="muted small">'+esc(meta.description||"Workspace module configuration")+'</div></div><div><span class="pill">'+(m.enabled?"Configured":"Disabled")+' · '+esc(status.replaceAll("_"," "))+'</span> '+action+'</div></div>';
+ });
+ $("moduleList").innerHTML=activeRows.join("")||'<div class="empty">No modules configured. Apply the industry workspace migration.</div>';
+ $("moduleList").querySelectorAll("[data-module-key]").forEach(button=>button.addEventListener("click",()=>setWorkspaceModule(button.dataset.moduleKey,button.dataset.moduleEnabled==="true")));
+ const assigned=new Set((modules||[]).map(m=>m.module_key));
+ const optionalRows=(registry||[]).filter(meta=>!assigned.has(meta.module_key)).map(meta=>{
+  const action=meta.implementation_status==="planned"?"":'<button class="btn secondary small" data-module-key="'+esc(meta.module_key)+'" data-module-enabled="true">Enable</button>';
+  return '<div class="item"><div><b>'+esc(meta.display_name)+'</b><div class="muted small">'+esc(meta.description)+'</div></div><div><span class="pill">'+esc(meta.implementation_status.replaceAll("_"," "))+'</span> '+action+'</div></div>';
+ });
+ $("availableModuleList").innerHTML=optionalRows.join("")||'<div class="empty">All registered modules are already assigned.</div>';
+ $("availableModuleList").querySelectorAll("[data-module-key]").forEach(button=>button.addEventListener("click",()=>setWorkspaceModule(button.dataset.moduleKey,true)));
  const latest=(requests||[])[0];$("industryChangeStatus").textContent=latest?"Latest industry change request: "+latest.status+" · "+latest.proposed_business_type+" · "+new Date(latest.created_at).toLocaleString():"No industry change requests.";
 }
 $("industrySuggestionForm").addEventListener("submit",async e=>{
