@@ -22,11 +22,12 @@ Additive implementation. Existing ZENVIO `admin_users`, `leads`, admin login and
 ## Database migration order
 In the existing Supabase project SQL Editor, run each migration as a separate query, in this order:
 1. `20261117_zenvio_one_foundation.sql`
-2. `20261118_zenvio_one_mirror.sql`
-3. `20261118_zenvio_one_anticipate.sql`
-4. `20261118_zenvio_one_swarm.sql`
-5. `20261118_zenvio_one_blackbox_whatif_evolve.sql`
-6. `20261119_zenvio_data_fortress.sql`
+2. `20261118_zenvio_owner_management.sql` (required for the Super Admin authorization function)
+3. `20261118_zenvio_one_mirror.sql`
+4. `20261118_zenvio_one_anticipate.sql`
+5. `20261118_zenvio_one_swarm.sql`
+6. `20261118_zenvio_one_blackbox_whatif_evolve.sql`
+7. `20261119_zenvio_data_fortress.sql`
 
 Confirm these tables exist:
 - `zenvio_organizations`, `zenvio_organization_members`, `zenvio_departments`, `zenvio_tasks`, `zenvio_events`
@@ -34,6 +35,7 @@ Confirm these tables exist:
 - `zenvio_metric_observations`, `zenvio_anticipate_findings`
 - `zenvio_swarm_runs`, `zenvio_swarm_approvals`
 - `zenvio_blackbox_records`, `zenvio_whatif_scenarios`, `zenvio_evolve_items`
+- `zenvio_backup_policies`, `zenvio_backup_destinations`, `zenvio_backup_runs`, `zenvio_restore_tests`
 
 Migrations are additive and enable organization-scoped RLS. Do not disable RLS or expose a service-role key in browser code.
 
