@@ -4,7 +4,7 @@
 
 The Universal Industry Engine configures a company's initial ZENVIO ONE workspace from the industry, sub-industry and business type selected during owner onboarding.
 
-The catalogue is extensible. The initial seed contains 40 major industry groups and broad sub-industry coverage. A business type can be entered as free text; missing major industries or sub-industries can be suggested by an owner and reviewed by Super Admin.
+The catalogue is extensible. The initial seed contains 40 major industry groups and broad sub-industry coverage. The business type is captured as a customizable owner-entered value in this milestone; it is not yet a separately managed third-level directory node. A business type can be entered as free text; missing major industries or sub-industries can be suggested by an owner and reviewed by Super Admin.
 
 ## Files
 
@@ -61,6 +61,7 @@ On approval, the database updates the workspace's industry and profile and adds 
 - `zenvio_industry_catalog` — hierarchical industry and sub-industry directory.
 - `zenvio_workspace_profiles` — company profile, selected taxonomy, dashboard layout and ARIA profile.
 - `zenvio_workspace_modules` — per-organization module enablement and configuration.
+- `zenvio_module_registry` — module descriptions, routes and implementation status (`implemented`, `configuration_only`, `planned`).
 - `zenvio_industry_suggestions` — owner suggestions awaiting Super Admin review.
 - `zenvio_industry_change_requests` — explicit industry-change workflow.
 - Existing `zenvio_organizations` — additive industry selection columns; existing organization records are preserved.
@@ -81,7 +82,7 @@ This milestone implements the directory, onboarding selection, workspace metadat
 
 It does **not** automatically implement every vertical-specific operational system. For example, a Healthcare dashboard slot named Appointments does not mean a complete patient scheduling/medical-record system exists. Each industry-specific operational engine, data model, integrations, compliance controls and ARIA knowledge pack must be implemented and tested separately before it is marketed as an active feature.
 
-The ARIA profile is stored as configuration metadata in this milestone; it is not yet proof that every AI prompt/runtime automatically consumes the profile.
+The ARIA personality and knowledge guidance, 3D environment profile and dashboard widget slots are stored as configuration metadata in this milestone; they are not yet proof that every AI prompt/runtime, 3D renderer or vertical operational data engine automatically consumes those profiles. Owners can enable/disable modules that are implemented or configuration-only; modules marked planned remain unavailable.
 
 ## Validation before activation
 
