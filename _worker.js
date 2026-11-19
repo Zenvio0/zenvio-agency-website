@@ -382,14 +382,15 @@ async function privateCloudStart(request, env, url) {
   if (!/^[0-9a-f-]{36}$/i.test(organizationId)) return json({ error: "Select a valid company workspace." }, 400);
   const member = await verifyPrivateCloudAdmin(request, organizationId);
   if (!member.ok) return json({ error: member.error }, member.status);
-  const state = randomHex(32);
   const stateRecord = {
     userId: member.user.id,
     organizationId,
     origin: url.origin,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    nonce: randomHex(16)
   };
-  await env.PRIVATE_CLOUD_KV.put("oauth-state:" + state, JSON.stringify(stateRecord), { expirationTtl: 600 });
+  const encryptedState = await encryptPrivateCloud(stateRecord, env);
+  const state = bytesToB64(new TextEncoder().encode(encryptedState)).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
     redirect_uri: privateCloudRedirect(url.origin),
@@ -404,11 +405,19 @@ async function privateCloudStart(request, env, url) {
 }
 async function privateCloudCallback(request, env, url) {
   const state = url.searchParams.get("state") || "";
-  if (!/^[a-f0-9]{64}$/i.test(state)) return new Response("Invalid connection state.", { status: 400 });
-  const stateRaw = await env.PRIVATE_CLOUD_KV?.get("oauth-state:" + state);
-  if (!stateRaw) return new Response("This Google connection request expired. Return to ZENVIO and try again.", { status: 400 });
-  await env.PRIVATE_CLOUD_KV.delete("oauth-state:" + state);
-  const stateData = JSON.parse(stateRaw);
+  if (!/^[A-Za-z0-9_-]{40,4096}$/.test(state)) return new Response("Invalid connection state.", { status: 400 });
+  let stateData;
+  try {
+    const base64 = state.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64 + "=".repeat((4 - base64.length % 4) % 4);
+    const encryptedState = new TextDecoder().decode(b64ToBytes(padded));
+    stateData = await decryptPrivateCloud(encryptedState, env);
+  } catch {
+    return new Response("Invalid or expired connection state.", { status: 400 });
+  }
+  if (!stateData?.createdAt || Date.now() - stateData.createdAt > 600000 || stateData.createdAt > Date.now() + 30000 || stateData.origin !== url.origin) {
+    return new Response("This Google connection request expired. Return to ZENVIO and try again.", { status: 400 });
+  }
   const finish = (result) => Response.redirect(stateData.origin + "/private-cloud.html?" + new URLSearchParams(result), 302);
   const providerError = url.searchParams.get("error");
   if (providerError) return finish({ connection: "error", reason: providerError === "access_denied" ? "Google permission was not granted." : "Google authorization failed." });
