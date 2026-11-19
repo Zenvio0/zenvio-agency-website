@@ -506,4 +506,202 @@ from public, anon;
 grant execute on function public.zenvio_review_industry_suggestion(uuid, text)
 to authenticated;
 
+
+-- Industry changes use an explicit request/review workflow; browser updates cannot bypass it.
+create table if not exists public.zenvio_industry_change_requests (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.zenvio_organizations(id) on delete cascade,
+  requested_by uuid not null references auth.users(id) on delete restrict,
+  current_industry_id uuid references public.zenvio_industry_catalog(id) on delete set null,
+  current_sub_industry_id uuid references public.zenvio_industry_catalog(id) on delete set null,
+  proposed_industry_id uuid not null references public.zenvio_industry_catalog(id) on delete restrict,
+  proposed_sub_industry_id uuid not null references public.zenvio_industry_catalog(id) on delete restrict,
+  proposed_business_type text not null check (char_length(trim(proposed_business_type)) between 2 and 140),
+  reason text,
+  status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  reviewed_by uuid references auth.users(id) on delete set null,
+  reviewed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+alter table public.zenvio_industry_change_requests enable row level security;
+revoke all on public.zenvio_industry_change_requests from anon, authenticated;
+
+drop policy if exists zenvio_industry_change_request_read on public.zenvio_industry_change_requests;
+create policy zenvio_industry_change_request_read
+on public.zenvio_industry_change_requests
+for select to authenticated
+using (
+  public.zenvio_is_super_admin()
+  or public.zenvio_has_role(organization_id, array['owner','admin'])
+);
+
+grant select on public.zenvio_industry_change_requests to authenticated;
+
+create or replace function public.zenvio_guard_industry_profile_change()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+begin
+  if (
+    new.industry_node_id is distinct from old.industry_node_id
+    or new.sub_industry_node_id is distinct from old.sub_industry_node_id
+    or new.business_type is distinct from old.business_type
+  ) and coalesce(current_setting('zenvio.industry_change_approved', true), '') <> 'yes' then
+    raise exception 'Industry changes must be submitted for review from the workspace settings';
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists zenvio_org_industry_change_guard on public.zenvio_organizations;
+create trigger zenvio_org_industry_change_guard
+before update of industry_node_id, sub_industry_node_id, business_type
+on public.zenvio_organizations
+for each row execute function public.zenvio_guard_industry_profile_change();
+
+create or replace function public.zenvio_request_industry_change(
+  p_organization_id uuid,
+  p_industry_id uuid,
+  p_sub_industry_id uuid,
+  p_business_type text,
+  p_reason text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  current_org public.zenvio_organizations%rowtype;
+  new_request_id uuid;
+begin
+  if auth.uid() is null or not public.zenvio_has_role(p_organization_id, array['owner','admin']) then
+    raise exception 'Workspace owner/admin access required';
+  end if;
+
+  select * into current_org
+  from public.zenvio_organizations
+  where id = p_organization_id
+  for update;
+
+  if not found then raise exception 'Workspace not found'; end if;
+
+  if not exists (
+    select 1 from public.zenvio_industry_catalog
+    where id = p_industry_id and level = 'industry' and is_active and is_published
+  ) then raise exception 'Choose a published industry'; end if;
+
+  if not exists (
+    select 1 from public.zenvio_industry_catalog
+    where id = p_sub_industry_id and parent_id = p_industry_id
+      and level = 'sub_industry' and is_active and is_published
+  ) then raise exception 'Choose a sub-industry under the selected industry'; end if;
+
+  if char_length(trim(coalesce(p_business_type, ''))) not between 2 and 140 then
+    raise exception 'Enter a valid business type';
+  end if;
+
+  if exists (
+    select 1 from public.zenvio_industry_change_requests
+    where organization_id = p_organization_id and status = 'pending'
+  ) then raise exception 'A workspace industry change is already awaiting review'; end if;
+
+  insert into public.zenvio_industry_change_requests(
+    organization_id, requested_by, current_industry_id, current_sub_industry_id,
+    proposed_industry_id, proposed_sub_industry_id, proposed_business_type, reason
+  )
+  values (
+    p_organization_id, auth.uid(), current_org.industry_node_id, current_org.sub_industry_node_id,
+    p_industry_id, p_sub_industry_id, trim(p_business_type), nullif(trim(coalesce(p_reason, '')), '')
+  )
+  returning id into new_request_id;
+
+  return new_request_id;
+end;
+$;
+
+create or replace function public.zenvio_review_industry_change(
+  p_request_id uuid,
+  p_decision text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  change_request public.zenvio_industry_change_requests%rowtype;
+  target_industry public.zenvio_industry_catalog%rowtype;
+  target_sub public.zenvio_industry_catalog%rowtype;
+  module_name text;
+  next_modules text[];
+begin
+  if not public.zenvio_is_super_admin() then raise exception 'Super Admin access required'; end if;
+  if p_decision not in ('approve','reject') then raise exception 'Decision must be approve or reject'; end if;
+
+  select * into change_request
+  from public.zenvio_industry_change_requests
+  where id = p_request_id and status = 'pending'
+  for update;
+
+  if not found then raise exception 'Pending industry change request not found'; end if;
+
+  if p_decision = 'reject' then
+    update public.zenvio_industry_change_requests
+    set status = 'rejected', reviewed_by = auth.uid(), reviewed_at = now()
+    where id = p_request_id;
+    return pg_catalog.jsonb_build_object('status','rejected');
+  end if;
+
+  select * into target_industry
+  from public.zenvio_industry_catalog
+  where id = change_request.proposed_industry_id and level = 'industry'
+    and is_active and is_published;
+  if not found then raise exception 'Proposed industry is no longer available'; end if;
+
+  select * into target_sub
+  from public.zenvio_industry_catalog
+  where id = change_request.proposed_sub_industry_id
+    and parent_id = target_industry.id and level = 'sub_industry'
+    and is_active and is_published;
+  if not found then raise exception 'Proposed sub-industry is no longer available'; end if;
+
+  perform pg_catalog.set_config('zenvio.industry_change_approved','yes',true);
+
+  update public.zenvio_organizations
+  set industry = target_industry.name || ' / ' || target_sub.name,
+      industry_node_id = target_industry.id,
+      sub_industry_node_id = target_sub.id,
+      business_type = change_request.proposed_business_type
+  where id = change_request.organization_id;
+
+  next_modules := target_sub.default_modules;
+
+  update public.zenvio_workspace_modules
+  set enabled = false, source = 'owner_disabled', updated_at = now()
+  where organization_id = change_request.organization_id
+    and source = 'industry_default'
+    and not (module_key = any(next_modules));
+
+  foreach module_name in array next_modules loop
+    insert into public.zenvio_workspace_modules(organization_id, module_key, enabled, source)
+    values (change_request.organization_id, module_name, true, 'industry_default')
+    on conflict (organization_id, module_key) do nothing;
+  end loop;
+
+  update public.zenvio_industry_change_requests
+  set status = 'approved', reviewed_by = auth.uid(), reviewed_at = now()
+  where id = p_request_id;
+
+  return pg_catalog.jsonb_build_object('status','approved','organization_id',change_request.organization_id);
+end;
+$;
+
+revoke all on function public.zenvio_request_industry_change(uuid, uuid, uuid, text, text) from public, anon;
+revoke all on function public.zenvio_review_industry_change(uuid, text) from public, anon;
+grant execute on function public.zenvio_request_industry_change(uuid, uuid, uuid, text, text) to authenticated;
+grant execute on function public.zenvio_review_industry_change(uuid, text) to authenticated;
+
 commit;
