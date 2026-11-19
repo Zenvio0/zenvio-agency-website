@@ -181,7 +181,7 @@ with seed(parent_slug, names) as (
 ),
 expanded as (
   select parent_slug, trim(item) as child_name
-  from seed, lateral regexp_split_to_table(names, '\\|') as item
+  from seed, lateral unnest(string_to_array(names, '|')) as item
 )
 insert into public.zenvio_industry_catalog
   (parent_id, level, name, slug, description, default_modules, sort_order)
