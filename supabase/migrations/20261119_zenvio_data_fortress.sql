@@ -169,8 +169,10 @@ grant select on public.zenvio_backup_policies to authenticated;
 grant insert (organization_id, schedule_cron, timezone, daily_retention_days, weekly_retention_weeks, monthly_retention_months, immutable_retention_days, rpo_target_minutes, rto_target_minutes, backup_scope, created_by) on public.zenvio_backup_policies to authenticated;
 grant update (schedule_cron, timezone, daily_retention_days, weekly_retention_weeks, monthly_retention_months, immutable_retention_days, rpo_target_minutes, rto_target_minutes, backup_scope) on public.zenvio_backup_policies to authenticated;
 grant select on public.zenvio_backup_destinations to authenticated;
-grant insert (organization_id, provider, label, bucket_name, endpoint_host, region, credential_reference, created_by) on public.zenvio_backup_destinations to authenticated;
-grant update (label, bucket_name, endpoint_host, region, credential_reference) on public.zenvio_backup_destinations to authenticated;
+grant insert (organization_id, provider, label, bucket_name, endpoint_host, region, created_by)
+on public.zenvio_backup_destinations to authenticated;
+grant update (label, bucket_name, endpoint_host, region)
+on public.zenvio_backup_destinations to authenticated;
 grant delete on public.zenvio_backup_destinations to authenticated;
 grant select on public.zenvio_backup_runs to authenticated;
 grant select on public.zenvio_restore_tests to authenticated;
