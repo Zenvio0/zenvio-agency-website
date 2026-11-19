@@ -1,3 +1,4 @@
+
 -- ZENVIO DATA FORTRESS v0.1
 -- Additive backup-control metadata only. Does NOT perform backups.
 -- No existing ZENVIO tables, records, policies, or secrets are modified.
@@ -84,10 +85,13 @@ create table if not exists public.zenvio_restore_tests (
 
 create index if not exists zenvio_backup_destinations_org_idx
   on public.zenvio_backup_destinations(organization_id, connection_status);
+
 create index if not exists zenvio_backup_runs_org_created_idx
   on public.zenvio_backup_runs(organization_id, created_at desc);
+
 create index if not exists zenvio_backup_runs_status_idx
   on public.zenvio_backup_runs(status, created_at desc);
+
 create index if not exists zenvio_restore_tests_org_created_idx
   on public.zenvio_restore_tests(organization_id, created_at desc);
 
@@ -112,12 +116,14 @@ revoke all on public.zenvio_backup_runs from anon, authenticated;
 revoke all on public.zenvio_restore_tests from anon, authenticated;
 
 drop policy if exists zenvio_backup_policy_owner_read on public.zenvio_backup_policies;
-create policy zenvio_backup_policy_owner_read on public.zenvio_backup_policies
+create policy zenvio_backup_policy_owner_read
+on public.zenvio_backup_policies
 for select to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']));
 
 drop policy if exists zenvio_backup_policy_owner_insert on public.zenvio_backup_policies;
-create policy zenvio_backup_policy_owner_insert on public.zenvio_backup_policies
+create policy zenvio_backup_policy_owner_insert
+on public.zenvio_backup_policies
 for insert to authenticated
 with check (
   created_by = auth.uid()
@@ -125,18 +131,21 @@ with check (
 );
 
 drop policy if exists zenvio_backup_policy_owner_update on public.zenvio_backup_policies;
-create policy zenvio_backup_policy_owner_update on public.zenvio_backup_policies
+create policy zenvio_backup_policy_owner_update
+on public.zenvio_backup_policies
 for update to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']))
 with check (public.zenvio_has_role(organization_id, array['owner','admin']));
 
 drop policy if exists zenvio_backup_destination_owner_read on public.zenvio_backup_destinations;
-create policy zenvio_backup_destination_owner_read on public.zenvio_backup_destinations
+create policy zenvio_backup_destination_owner_read
+on public.zenvio_backup_destinations
 for select to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']));
 
 drop policy if exists zenvio_backup_destination_owner_insert on public.zenvio_backup_destinations;
-create policy zenvio_backup_destination_owner_insert on public.zenvio_backup_destinations
+create policy zenvio_backup_destination_owner_insert
+on public.zenvio_backup_destinations
 for insert to authenticated
 with check (
   created_by = auth.uid()
@@ -144,35 +153,83 @@ with check (
 );
 
 drop policy if exists zenvio_backup_destination_owner_update on public.zenvio_backup_destinations;
-create policy zenvio_backup_destination_owner_update on public.zenvio_backup_destinations
+create policy zenvio_backup_destination_owner_update
+on public.zenvio_backup_destinations
 for update to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']))
 with check (public.zenvio_has_role(organization_id, array['owner','admin']));
 
 drop policy if exists zenvio_backup_destination_owner_delete on public.zenvio_backup_destinations;
-create policy zenvio_backup_destination_owner_delete on public.zenvio_backup_destinations
+create policy zenvio_backup_destination_owner_delete
+on public.zenvio_backup_destinations
 for delete to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']));
 
 drop policy if exists zenvio_backup_runs_owner_read on public.zenvio_backup_runs;
-create policy zenvio_backup_runs_owner_read on public.zenvio_backup_runs
+create policy zenvio_backup_runs_owner_read
+on public.zenvio_backup_runs
 for select to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']));
 
 drop policy if exists zenvio_restore_tests_owner_read on public.zenvio_restore_tests;
-create policy zenvio_restore_tests_owner_read on public.zenvio_restore_tests
+create policy zenvio_restore_tests_owner_read
+on public.zenvio_restore_tests
 for select to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']));
 
 -- Browser clients may read control metadata but cannot create or alter backup results.
 grant select on public.zenvio_backup_policies to authenticated;
-grant insert (organization_id, schedule_cron, timezone, daily_retention_days, weekly_retention_weeks, monthly_retention_months, immutable_retention_days, rpo_target_minutes, rto_target_minutes, backup_scope, created_by) on public.zenvio_backup_policies to authenticated;
-grant update (schedule_cron, timezone, daily_retention_days, weekly_retention_weeks, monthly_retention_months, immutable_retention_days, rpo_target_minutes, rto_target_minutes, backup_scope) on public.zenvio_backup_policies to authenticated;
+
+grant insert (
+  organization_id,
+  schedule_cron,
+  timezone,
+  daily_retention_days,
+  weekly_retention_weeks,
+  monthly_retention_months,
+  immutable_retention_days,
+  rpo_target_minutes,
+  rto_target_minutes,
+  backup_scope,
+  created_by
+)
+on public.zenvio_backup_policies to authenticated;
+
+grant update (
+  schedule_cron,
+  timezone,
+  daily_retention_days,
+  weekly_retention_weeks,
+  monthly_retention_months,
+  immutable_retention_days,
+  rpo_target_minutes,
+  rto_target_minutes,
+  backup_scope
+)
+on public.zenvio_backup_policies to authenticated;
+
 grant select on public.zenvio_backup_destinations to authenticated;
-grant insert (organization_id, provider, label, bucket_name, endpoint_host, region, created_by)
+
+-- credential_reference and connection_status remain server-managed.
+grant insert (
+  organization_id,
+  provider,
+  label,
+  bucket_name,
+  endpoint_host,
+  region,
+  created_by
+)
 on public.zenvio_backup_destinations to authenticated;
-grant update (label, bucket_name, endpoint_host, region)
+
+grant update (
+  label,
+  bucket_name,
+  endpoint_host,
+  region
+)
 on public.zenvio_backup_destinations to authenticated;
+
 grant delete on public.zenvio_backup_destinations to authenticated;
 grant select on public.zenvio_backup_runs to authenticated;
 grant select on public.zenvio_restore_tests to authenticated;
@@ -183,49 +240,89 @@ returns jsonb
 language plpgsql
 stable
 security definer
-set search_path = public, auth
+set search_path = ''
 as $$
-declare result jsonb;
+declare
+  result jsonb;
 begin
   if not public.zenvio_is_super_admin() then
     raise exception 'Super Admin access required';
   end if;
 
-  select jsonb_build_object(
-    'organizations', (select count(*) from public.zenvio_organizations),
-    'policies_enabled', (select count(*) from public.zenvio_backup_policies where enabled),
-    'destinations_connected', (select count(*) from public.zenvio_backup_destinations where connection_status = 'connected'),
-    'runs_verified', (select count(*) from public.zenvio_backup_runs where status = 'verified'),
-    'runs_failed', (select count(*) from public.zenvio_backup_runs where status = 'failed'),
-    'restore_tests_passed', (select count(*) from public.zenvio_restore_tests where status = 'passed'),
-    'restore_tests_failed', (select count(*) from public.zenvio_restore_tests where status = 'failed'),
-    'workspaces', coalesce((
-      select jsonb_agg(jsonb_build_object(
-        'organization_id', o.id,
-        'organization_name', o.name,
-        'policy_enabled', coalesce(p.enabled, false),
-        'destination_count', (
-          select count(*) from public.zenvio_backup_destinations d
-          where d.organization_id = o.id and d.connection_status = 'connected'
-        ),
-        'last_verified_backup', (
-          select max(r.verified_at) from public.zenvio_backup_runs r
-          where r.organization_id = o.id and r.status = 'verified'
-        ),
-        'last_restore_test', (
-          select max(t.completed_at) from public.zenvio_restore_tests t
-          where t.organization_id = o.id and t.status = 'passed'
+  select pg_catalog.jsonb_build_object(
+    'organizations',
+      (select pg_catalog.count(*) from public.zenvio_organizations),
+
+    'policies_enabled',
+      (select pg_catalog.count(*) from public.zenvio_backup_policies where enabled),
+
+    'destinations_connected',
+      (select pg_catalog.count(*) from public.zenvio_backup_destinations
+       where connection_status = 'connected'),
+
+    'runs_verified',
+      (select pg_catalog.count(*) from public.zenvio_backup_runs
+       where status = 'verified'),
+
+    'runs_failed',
+      (select pg_catalog.count(*) from public.zenvio_backup_runs
+       where status = 'failed'),
+
+    'restore_tests_passed',
+      (select pg_catalog.count(*) from public.zenvio_restore_tests
+       where status = 'passed'),
+
+    'restore_tests_failed',
+      (select pg_catalog.count(*) from public.zenvio_restore_tests
+       where status = 'failed'),
+
+    'workspaces',
+      pg_catalog.coalesce((
+        select pg_catalog.jsonb_agg(
+          pg_catalog.jsonb_build_object(
+            'organization_id', o.id,
+            'organization_name', o.name,
+            'policy_enabled', pg_catalog.coalesce(p.enabled, false),
+
+            'destination_count', (
+              select pg_catalog.count(*)
+              from public.zenvio_backup_destinations d
+              where d.organization_id = o.id
+                and d.connection_status = 'connected'
+            ),
+
+            'last_verified_backup', (
+              select pg_catalog.max(r.verified_at)
+              from public.zenvio_backup_runs r
+              where r.organization_id = o.id
+                and r.status = 'verified'
+            ),
+
+            'last_restore_test', (
+              select pg_catalog.max(t.completed_at)
+              from public.zenvio_restore_tests t
+              where t.organization_id = o.id
+                and t.status = 'passed'
+            )
+          )
+          order by o.created_at desc
         )
-      ) order by o.created_at desc)
-      from public.zenvio_organizations o
-      left join public.zenvio_backup_policies p on p.organization_id = o.id
-    ), '[]'::jsonb)
-  ) into result;
+        from public.zenvio_organizations o
+        left join public.zenvio_backup_policies p
+          on p.organization_id = o.id
+      ), '[]'::jsonb)
+  )
+  into result;
+
   return result;
 end;
 $$;
 
-revoke all on function public.zenvio_backup_platform_overview() from public, anon;
-grant execute on function public.zenvio_backup_platform_overview() to authenticated;
+-- Remove default/public execution and expose only to authenticated callers.
+revoke all on function public.zenvio_backup_platform_overview()
+from public, anon;
+
+grant execute on function public.zenvio_backup_platform_overview()
+to authenticated;
 
 commit;
