@@ -37,7 +37,9 @@
    </details>
    <div class="field"><label>Active organization</label><select id="orgSelect"><option value="">Loading organizations…</option></select></div><div id="orgError" class="error"></div>
   </section>
-  <section class="card" style="grid-column:1/-1"><h2>Industry workspace configuration</h2><div id="industryWorkspaceSummary" class="empty">Create or select a workspace to view its industry configuration.</div><div id="moduleList" class="list"></div></section>
+  <section class="card" style="grid-column:1/-1"><h2>Industry workspace configuration</h2><div id="industryWorkspaceSummary" class="empty">Create or select a workspace to view its industry configuration.</div><div id="industryWidgetList" class="grid"></div><div id="moduleList" class="list"></div>
+   <details style="margin-top:16px"><summary class="muted" style="cursor:pointer">Request a change to this business's industry</summary><form id="industryChangeForm"><div class="field"><label>New industry</label><select id="changeIndustry" required><option value="">Choose industry</option></select></div><div class="field"><label>New sub-industry</label><select id="changeSubIndustry" required disabled><option value="">Choose an industry first</option></select></div><div class="field"><label>Business type</label><input id="changeBusinessType" maxlength="140" required placeholder="e.g. Property Agency"></div><div class="field"><label>Reason for change</label><input id="changeReason" maxlength="500" placeholder="Optional explanation"></div><button class="btn secondary">Submit change for review</button><div id="industryChangeMessage" class="muted small"></div></form></details>
+   <div id="industryChangeStatus" class="muted small"></div></section>
   <section class="card"><h2>2. Add a department</h2><form id="deptForm"><div class="field"><label>Department name</label><input id="deptName" maxlength="100" placeholder="e.g. Operations" required></div><div class="field"><label>Description</label><input id="deptDesc" placeholder="What this team is responsible for"></div><button class="btn">Add department</button></form><div id="deptList" class="list"><div class="empty">Select an organization first.</div></div><div id="deptError" class="error"></div></section>
   <section class="card"><h2>3. Create a task</h2><form id="taskForm"><div class="field"><label>Task title</label><input id="taskTitle" maxlength="200" placeholder="e.g. Review new customer enquiries" required></div><div class="field"><label>Department</label><select id="taskDept"><option value="">No department</option></select></div><div class="row"><div class="field" style="flex:1"><label>Priority</label><select id="taskPriority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></div><div class="field" style="flex:1"><label>Due date</label><input id="taskDue" type="date"></div></div><div class="field"><label>Description</label><textarea id="taskDesc" rows="2" placeholder="Optional context"></textarea></div><button class="btn">Create task</button></form><div id="taskError" class="error"></div></section>
   <section class="card"><h2>4. Current work</h2><div id="taskList" class="list"><div class="empty">Select an organization to load tasks.</div></div></section>
@@ -58,7 +60,7 @@ async function loadIndustryDirectory(){
  const {data,error}=await db.from("zenvio_industry_catalog").select("id,parent_id,level,name,default_modules,sort_order").eq("level","industry").eq("is_active",true).eq("is_published",true).order("sort_order").order("name");
  if(error){showError("industryError",error);$("industry").innerHTML='<option value="">Industry directory migration required</option>';return;}
  industryCatalog=data||[];
- $("industry").innerHTML='<option value="">Choose your industry</option>'+industryCatalog.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");
+ $("industry").innerHTML='<option value="">Choose your industry</option>'+industryCatalog.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");$("changeIndustry").innerHTML='<option value="">Choose industry</option>'+industryCatalog.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");
 }
 async function loadSubIndustries(){
  const parent=$("industry").value;
@@ -71,6 +73,21 @@ async function loadSubIndustries(){
  $("subIndustry").disabled=false;
 }
 $("industry").addEventListener("change",loadSubIndustries);
+async function loadChangeSubIndustries(){
+ const parent=$("changeIndustry").value;$("changeSubIndustry").disabled=true;
+ if(!parent){$("changeSubIndustry").innerHTML='<option value="">Choose an industry first</option>';return;}
+ const {data,error}=await db.from("zenvio_industry_catalog").select("id,name").eq("parent_id",parent).eq("level","sub_industry").eq("is_active",true).eq("is_published",true).order("sort_order").order("name");
+ if(error){$("industryChangeMessage").textContent=error.message;return;}
+ $("changeSubIndustry").innerHTML='<option value="">Choose sub-industry</option>'+(data||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");$("changeSubIndustry").disabled=false;
+}
+$("changeIndustry").addEventListener("change",loadChangeSubIndustries);
+$("industryChangeForm").addEventListener("submit",async e=>{
+ e.preventDefault();$("industryChangeMessage").textContent="Submitting change request…";
+ const {data,error}=await db.rpc("zenvio_request_industry_change",{p_organization_id:activeOrg,p_industry_id:$("changeIndustry").value,p_sub_industry_id:$("changeSubIndustry").value,p_business_type:$("changeBusinessType").value.trim(),p_reason:$("changeReason").value.trim()||null});
+ if(error){$("industryChangeMessage").textContent=error.message;return;}
+ $("industryChangeMessage").textContent="Change request submitted. Your current workspace remains unchanged until Super Admin review.";
+ await loadIndustryWorkspace();
+});
 async function loadOrgs(){
  const {data,error}=await db.from("zenvio_organizations").select("id,name,industry,industry_node_id,sub_industry_node_id,business_type,created_at").order("created_at",{ascending:false});
  if(error){showError("orgError",error);$("orgSelect").innerHTML='<option value="">Apply the database migration first</option>';return;}
@@ -103,16 +120,20 @@ $("orgSelect").addEventListener("change",async()=>{activeOrg=$("orgSelect").valu
 async function logEvent(type,entity,id,summary,metadata={}){const {error}=await db.from("zenvio_events").insert({organization_id:activeOrg,actor_user_id:session.user.id,event_type:type,entity_type:entity,entity_id:id,summary,metadata});if(error)console.warn("Event logging:",error.message);}
 async function loadOrgData(){if(!activeOrg)return;await Promise.all([loadDepartments(),loadTasks(),loadEvents(),loadIndustryWorkspace()]);}
 async function loadIndustryWorkspace(){
- const [{data:profile,error:profileError},{data:modules,error:moduleError}] = await Promise.all([
-  db.from("zenvio_workspace_profiles").select("business_type,company_size,website_url,location,description,aria_profile,industry_id,sub_industry_id").eq("organization_id",activeOrg).maybeSingle(),
-  db.from("zenvio_workspace_modules").select("module_key,enabled,source").eq("organization_id",activeOrg).order("module_key")
+ const [{data:profile,error:profileError},{data:modules,error:moduleError},{data:requests,error:requestError}] = await Promise.all([
+  db.from("zenvio_workspace_profiles").select("business_type,company_size,website_url,location,description,aria_profile,industry_id,sub_industry_id,dashboard_layout").eq("organization_id",activeOrg).maybeSingle(),
+  db.from("zenvio_workspace_modules").select("module_key,enabled,source").eq("organization_id",activeOrg).order("module_key"),
+  db.from("zenvio_industry_change_requests").select("status,created_at,proposed_business_type").eq("organization_id",activeOrg).order("created_at",{ascending:false}).limit(1)
  ]);
- if(profileError||moduleError){$("industryWorkspaceSummary").textContent=(profileError||moduleError).message;return;}
+ if(profileError||moduleError||requestError){$("industryWorkspaceSummary").textContent=(profileError||moduleError||requestError).message;return;}
  const org=$("orgSelect").selectedOptions[0]?.textContent||"Workspace";
  const industry=industryCatalog.find(x=>x.id===profile?.industry_id)?.name||"Industry not set";
  const {data:sub}=profile?.sub_industry_id?await db.from("zenvio_industry_catalog").select("name").eq("id",profile.sub_industry_id).maybeSingle():{data:null};
  $("industryWorkspaceSummary").innerHTML='<b>'+esc(org)+'</b><div class="muted small">'+esc(industry)+' / '+esc(sub?.name||"")+' / '+esc(profile?.business_type||"Business")+'</div><div class="muted small">'+esc(profile?.location||"Location not added")+' · '+esc(profile?.website_url||"Website not added")+'</div><div class="muted small">'+esc(profile?.description||"Add business details to improve workspace context.")+'</div>';
+ const widgets=profile?.dashboard_layout?.widgets||[];
+ $("industryWidgetList").innerHTML=widgets.map(w=>'<div class="card"><div class="module">'+esc(industry.toUpperCase())+'</div><div class="metric" style="font-size:16px">'+esc(String(w).replaceAll("_"," ").toUpperCase())+'</div><div class="muted small">Industry dashboard slot · connect its operational data source to activate</div></div>').join("");
  $("moduleList").innerHTML=(modules||[]).map(m=>'<div class="item"><span>'+esc(m.module_key.replaceAll("_"," ").toUpperCase())+'</span><span class="pill">'+(m.enabled?"Enabled":"Disabled")+'</span></div>').join("")||'<div class="empty">No modules configured. Apply the industry workspace migration.</div>';
+ const latest=(requests||[])[0];$("industryChangeStatus").textContent=latest?"Latest industry change request: "+latest.status+" · "+latest.proposed_business_type+" · "+new Date(latest.created_at).toLocaleString():"No industry change requests.";
 }
 $("industrySuggestionForm").addEventListener("submit",async e=>{
  e.preventDefault();$("suggestionMessage").textContent="Submitting…";
