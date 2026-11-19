@@ -358,13 +358,28 @@ async function refreshGoogleAccess(refreshToken, env) {
   if (!token.access_token) throw new Error("Google did not return an access token.");
   return token.access_token;
 }
+
+async function verifyPrivateCloudAdmin(request, organizationId) {
+  const member = await verifyMember(request, organizationId);
+  if (!member.ok) return member;
+  const accessToken = (request.headers.get("authorization") || "").slice(7);
+  const response = await fetch(SUPABASE_URL + "/rest/v1/zenvio_organization_members?select=role&organization_id=eq." +
+    encodeURIComponent(organizationId) + "&user_id=eq." + encodeURIComponent(member.user.id) + "&limit=1", {
+      headers: { apikey: SUPABASE_PUBLISHABLE_KEY, authorization: "Bearer " + accessToken }
+    });
+  if (!response.ok) return { ok: false, status: 403, error: "Could not verify company administrator access." };
+  const rows = await response.json();
+  if (!rows?.[0] || !["owner", "admin"].includes(rows[0].role)) return { ok: false, status: 403, error: "Only a company owner or admin can connect or disconnect its Private Cloud." };
+  return member;
+}
+
 async function privateCloudStart(request, env, url) {
   if (!privateCloudConfig(env)) return json({ error: "Private Cloud is not configured yet. Owner setup is required." }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ error: "Request body must be valid JSON." }, 400); }
   const organizationId = typeof body.organizationId === "string" ? body.organizationId : "";
   if (!/^[0-9a-f-]{36}$/i.test(organizationId)) return json({ error: "Select a valid company workspace." }, 400);
-  const member = await verifyMember(request, organizationId);
+  const member = await verifyPrivateCloudAdmin(request, organizationId);
   if (!member.ok) return json({ error: member.error }, member.status);
   const state = randomHex(32);
   const stateRecord = {
@@ -444,7 +459,7 @@ async function privateCloudStatus(request, env, organizationId) {
   if (!raw) return json({ connected: false, quotaBytes: 5368709120, usedBytes: 0 });
   try {
     const saved = await decryptPrivateCloud(raw, env);
-    if (saved.userId !== member.user.id || saved.organizationId !== organizationId) return json({ error: "Connection ownership check failed." }, 403);
+    if (saved.organizationId !== organizationId) return json({ error: "Connection ownership check failed." }, 403);
     const accessToken = await refreshGoogleAccess(saved.refreshToken, env);
     let pageToken = "";
     let usedBytes = 0;
@@ -481,7 +496,7 @@ async function privateCloudStatus(request, env, organizationId) {
 }
 async function privateCloudDisconnect(request, env, organizationId) {
   if (!/^[0-9a-f-]{36}$/i.test(organizationId)) return json({ error: "Select a valid company workspace." }, 400);
-  const member = await verifyMember(request, organizationId);
+  const member = await verifyPrivateCloudAdmin(request, organizationId);
   if (!member.ok) return json({ error: member.error }, member.status);
   const key = "drive-connection:" + organizationId;
   const raw = await env.PRIVATE_CLOUD_KV?.get(key);
