@@ -639,7 +639,8 @@ set search_path = ''
 as $$
 begin
   if (
-    new.industry_node_id is distinct from old.industry_node_id
+    new.industry is distinct from old.industry
+    or new.industry_node_id is distinct from old.industry_node_id
     or new.sub_industry_node_id is distinct from old.sub_industry_node_id
     or new.business_type is distinct from old.business_type
   ) and coalesce(current_setting('zenvio.industry_change_approved', true), '') <> 'yes' then
@@ -651,7 +652,7 @@ $$;
 
 drop trigger if exists zenvio_org_industry_change_guard on public.zenvio_organizations;
 create trigger zenvio_org_industry_change_guard
-before update of industry_node_id, sub_industry_node_id, business_type
+before update of industry, industry_node_id, sub_industry_node_id, business_type
 on public.zenvio_organizations
 for each row execute function public.zenvio_guard_industry_profile_change();
 
@@ -774,7 +775,7 @@ begin
   next_modules := target_sub.default_modules;
 
   update public.zenvio_workspace_modules
-  set enabled = false, source = 'owner_disabled', updated_at = now()
+  set enabled = false, source = 'industry_default', updated_at = now()
   where organization_id = change_request.organization_id
     and source = 'industry_default'
     and not (module_key = any(next_modules));
@@ -782,7 +783,9 @@ begin
   foreach module_name in array next_modules loop
     insert into public.zenvio_workspace_modules(organization_id, module_key, enabled, source)
     values (change_request.organization_id, module_name, true, 'industry_default')
-    on conflict (organization_id, module_key) do nothing;
+    on conflict (organization_id, module_key) do update
+    set enabled = true, updated_at = now()
+    where public.zenvio_workspace_modules.source = 'industry_default';
   end loop;
 
   update public.zenvio_industry_change_requests
