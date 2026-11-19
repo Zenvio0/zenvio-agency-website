@@ -14,6 +14,11 @@ Additive implementation. Existing ZENVIO `admin_users`, `leads`, admin login and
 - `supabase/migrations/20261118_zenvio_one_swarm.sql` — specialist plans, approval records and secure approval transaction.
 - `supabase/migrations/20261118_zenvio_one_blackbox_whatif_evolve.sql` — company memory, scenario simulation and measured improvement tables.
 
+## DATA FORTRESS v0.1
+- `backup.html` — owner/admin backup health dashboard (read-only metadata view).
+- `supabase/migrations/20261119_zenvio_data_fortress.sql` — backup policies, destination metadata, backup run history, restore-test history and Super Admin aggregate health function.
+- This milestone creates the secure control-plane schema only. It does not run backups, connect a storage provider, or activate an RPO/RTO guarantee. Credentials must be configured as server-side Worker secrets; never store provider credentials in Supabase rows or browser code.
+
 ## Database migration order
 In the existing Supabase project SQL Editor, run each migration as a separate query, in this order:
 1. `20261117_zenvio_one_foundation.sql`
@@ -21,6 +26,7 @@ In the existing Supabase project SQL Editor, run each migration as a separate qu
 3. `20261118_zenvio_one_anticipate.sql`
 4. `20261118_zenvio_one_swarm.sql`
 5. `20261118_zenvio_one_blackbox_whatif_evolve.sql`
+6. `20261119_zenvio_data_fortress.sql`
 
 Confirm these tables exist:
 - `zenvio_organizations`, `zenvio_organization_members`, `zenvio_departments`, `zenvio_tasks`, `zenvio_events`
@@ -40,6 +46,7 @@ Deploy the updated repository static assets to the existing Cloudflare Worker. K
 - ANTICIPATE: https://zenvio-agency.haiderium213.workers.dev/anticipate.html
 - SWARM: https://zenvio-agency.haiderium213.workers.dev/swarm.html
 - BLACKBOX / WHAT IF / EVOLVE: https://zenvio-agency.haiderium213.workers.dev/modules.html
+- DATA FORTRESS: https://zenvio-agency.haiderium213.workers.dev/backup.html
 
 ## SWARM v0.4
 1. Open `/swarm.html` and select the ZENVIO organization.
@@ -61,3 +68,7 @@ Deploy the updated repository static assets to the existing Cloudflare Worker. K
 5. Acknowledge, resolve or dismiss findings after human review.
 
 ANTICIPATE v0.3 uses deterministic rules. It detects overdue/urgent-blocked tasks and significant revenue declines/expense increases when comparable observations exist. It flags missing measurements. It is not an AI forecaster and does not claim causes. Results depend on source data quality. ANTICIPATE is not yet connected to accounting, CRM or external business systems automatically.
+
+
+## DATA FORTRESS implementation boundary
+The first milestone adds tenant-scoped backup control metadata and a read-only owner/admin dashboard. A verified backup must be created by a separate scheduled backup worker, written to an independent storage account, checksum-verified, and followed by a successful restore test. Do not set a policy to enabled or describe a destination as connected until those steps are implemented and tested. The Super Admin RPC returns aggregate backup health only and never customer file contents.
