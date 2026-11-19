@@ -289,6 +289,7 @@ async function handleIntelligence(request, env) {
 // refresh credentials and minimal connection metadata are held in Worker KV.
 const PRIVATE_CLOUD_SCOPE = "https://www.googleapis.com/auth/drive.file openid email";
 const PRIVATE_CLOUD_FOLDER = "ZENVIO PRIVATE CLOUD";
+function privateCloudFolderName(organizationId) { return PRIVATE_CLOUD_FOLDER + " - " + organizationId.slice(0, 8).toUpperCase(); }
 function bytesToB64(bytes) {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -427,20 +428,31 @@ async function privateCloudCallback(request, env, url) {
     });
     const googleUser = await userResponse.json().catch(() => ({}));
     if (!userResponse.ok || !googleUser.email || googleUser.email_verified !== true) throw new Error("Could not verify the connected Google account email.");
-    const folder = await googleDriveRequest("files", token.access_token, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        name: PRIVATE_CLOUD_FOLDER,
-        mimeType: "application/vnd.google-apps.folder",
-        description: "Company-owned ZENVIO ONE private workspace folder. Company files remain in this Google Drive."
-      })
+    const folderName = privateCloudFolderName(stateData.organizationId);
+    const folderQuery = new URLSearchParams({
+      q: "name = '" + folderName.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+      pageSize: "10",
+      fields: "files(id,name)"
     });
+    const existing = await googleDriveRequest("files?" + folderQuery.toString(), token.access_token);
+    let folder = (existing.files || [])[0];
+    if (!folder) {
+      folder = await googleDriveRequest("files", token.access_token, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: folderName,
+          mimeType: "application/vnd.google-apps.folder",
+          description: "Company-owned ZENVIO ONE private workspace folder. Company files remain in this Google Drive."
+        })
+      });
+    }
     if (!folder.id) throw new Error("Google Drive did not confirm folder creation.");
     const encrypted = await encryptPrivateCloud({
       refreshToken: token.refresh_token,
       googleEmail: googleUser.email,
       folderId: folder.id,
+      folderName,
       connectedAt: new Date().toISOString(),
       organizationId: stateData.organizationId,
       userId: stateData.userId
@@ -482,7 +494,7 @@ async function privateCloudStatus(request, env, organizationId) {
     return json({
       connected: true,
       googleEmail: saved.googleEmail,
-      folderName: PRIVATE_CLOUD_FOLDER,
+      folderName: saved.folderName || PRIVATE_CLOUD_FOLDER,
       folderId: saved.folderId,
       connectedAt: saved.connectedAt,
       quotaBytes: 5368709120,
@@ -503,7 +515,7 @@ async function privateCloudDisconnect(request, env, organizationId) {
   if (!raw) return json({ disconnected: true });
   try {
     const saved = await decryptPrivateCloud(raw, env);
-    if (saved.userId !== member.user.id || saved.organizationId !== organizationId) return json({ error: "Connection ownership check failed." }, 403);
+    if (saved.organizationId !== organizationId) return json({ error: "Connection ownership check failed." }, 403);
     await fetch("https://oauth2.googleapis.com/revoke", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
