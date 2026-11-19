@@ -46,6 +46,8 @@ alter table public.zenvio_organizations
 
 create table if not exists public.zenvio_workspace_profiles (
   dashboard_layout jsonb not null default '{"version":1,"layout":"industry_default","widgets":[]}'::jsonb check (jsonb_typeof(dashboard_layout) = 'object'),
+  knowledge_profile jsonb not null default '{"guidance":"Use approved company information only.","sources":[]}'::jsonb check (jsonb_typeof(knowledge_profile) = 'object'),
+  experience_profile jsonb not null default '{"environment":"none","theme":"dark"}'::jsonb check (jsonb_typeof(experience_profile) = 'object'),
   organization_id uuid primary key references public.zenvio_organizations(id) on delete cascade,
   industry_id uuid references public.zenvio_industry_catalog(id) on delete set null,
   sub_industry_id uuid references public.zenvio_industry_catalog(id) on delete set null,
@@ -425,13 +427,15 @@ begin
     array['mirror','anticipate','swarm','blackbox','what_if','evolve','aria','crm','analytics']::text[]);
 
   insert into public.zenvio_workspace_profiles (
-    organization_id, industry_id, sub_industry_id, business_type, aria_profile, dashboard_layout
+    organization_id, industry_id, sub_industry_id, business_type, aria_profile, dashboard_layout, knowledge_profile, experience_profile
   )
   values (
     new.id, new.industry_node_id, new.sub_industry_node_id,
     coalesce(nullif(trim(new.business_type), ''), 'General Business'),
     coalesce(selected_sub.aria_profile, selected_industry.aria_profile, '{"tone":"professional","mode":"industry_assistant"}'::jsonb),
-    coalesce(selected_sub.dashboard_layout, selected_industry.dashboard_layout, '{"version":1,"layout":"industry_default","widgets":[]}'::jsonb)
+    coalesce(selected_sub.dashboard_layout, selected_industry.dashboard_layout, '{"version":1,"layout":"industry_default","widgets":[]}'::jsonb),
+    coalesce(selected_sub.knowledge_profile, selected_industry.knowledge_profile, '{"guidance":"Use approved company information only.","sources":[]}'::jsonb),
+    coalesce(selected_sub.experience_profile, selected_industry.experience_profile, '{"environment":"none","theme":"dark"}'::jsonb)
   )
   on conflict (organization_id) do update
   set industry_id = excluded.industry_id,
@@ -439,6 +443,8 @@ begin
       business_type = excluded.business_type,
       aria_profile = excluded.aria_profile,
       dashboard_layout = excluded.dashboard_layout,
+      knowledge_profile = excluded.knowledge_profile,
+      experience_profile = excluded.experience_profile,
       updated_at = now();
 
   foreach module_name in array modules_to_enable loop
@@ -469,6 +475,9 @@ begin
     or new.sub_industry_id is distinct from old.sub_industry_id
     or new.business_type is distinct from old.business_type
     or new.dashboard_layout is distinct from old.dashboard_layout
+    or new.knowledge_profile is distinct from old.knowledge_profile
+    or new.experience_profile is distinct from old.experience_profile
+    or new.aria_profile is distinct from old.aria_profile
   ) and coalesce(current_setting('zenvio.industry_change_approved', true), '') <> 'yes' then
     raise exception 'Industry taxonomy and dashboard layout are managed by the approved industry workflow';
   end if;
@@ -478,7 +487,7 @@ $$;
 
 drop trigger if exists zenvio_workspace_profile_taxonomy_guard on public.zenvio_workspace_profiles;
 create trigger zenvio_workspace_profile_taxonomy_guard
-before update of industry_id, sub_industry_id, business_type, dashboard_layout
+before update of industry_id, sub_industry_id, business_type, dashboard_layout, knowledge_profile, experience_profile, aria_profile
 on public.zenvio_workspace_profiles
 for each row execute function public.zenvio_guard_workspace_profile_taxonomy_change();
 
@@ -613,7 +622,11 @@ begin
     update public.zenvio_industry_catalog child
     set default_modules = parent.default_modules,
         dashboard_layout = parent.dashboard_layout,
-        aria_profile = parent.aria_profile
+        aria_profile = parent.aria_profile,
+        knowledge_profile = parent.knowledge_profile,
+        experience_profile = parent.experience_profile,
+        approval_status = parent.approval_status,
+        is_published = parent.is_published
     from public.zenvio_industry_catalog parent
     where child.id = new_node_id and parent.id = suggestion.parent_node_id;
   end if;
