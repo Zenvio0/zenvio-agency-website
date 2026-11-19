@@ -6,3 +6,7 @@ compatibility_date = "2026-11-17"
 directory = "."
 binding = "ASSETS"
 run_worker_first = ["/api/*"]
+
+[[kv_namespaces]]
+binding = "PRIVATE_CLOUD_KV"
+id = "0e9465f4b29940ac84a76616d69217dd"
