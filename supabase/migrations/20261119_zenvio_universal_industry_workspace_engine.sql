@@ -289,7 +289,57 @@ set name = excluded.name,
 
 -- Registry distinguishes working modules from configuration-only and planned modules.
 create table if not exists public.zenvio_module_registry (
-  module_key text primary key check (module_key ~ '^[a-z][a-z0-9_]{1,50}
+  module_key text primary key check (module_key ~ '^[a-z][a-z0-9_]{1,50}$'),
+  display_name text not null,
+  description text not null default '',
+  implementation_status text not null default 'planned'
+    check (implementation_status in ('implemented','configuration_only','planned')),
+  route text,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.zenvio_module_registry(module_key,display_name,description,implementation_status,route)
+values
+('mirror','MIRROR','Business digital twin and structured business context.','implemented','/mirror.html'),
+('anticipate','ANTICIPATE','Evidence-based signals and risk review.','implemented','/anticipate.html'),
+('swarm','SWARM','Controlled specialist plans and approval workflow.','implemented','/swarm.html'),
+('blackbox','BLACKBOX','Searchable business memory records.','implemented','/modules.html'),
+('what_if','WHAT IF','Scenario arithmetic and comparison.','implemented','/modules.html'),
+('evolve','EVOLVE','Improvement tracking and measured outcomes.','implemented','/modules.html'),
+('aria','ARIA','Industry-specific AI configuration profile; runtime integration remains in progress.','configuration_only','/intelligence.html'),
+('crm','CRM','Workspace CRM integration; verify feature scope before commercial activation.','configuration_only','/admin'),
+('analytics','Analytics','Industry-specific analytics configuration; vertical data connectors remain in progress.','configuration_only',null),
+('website_studio','Website Studio','Industry website templates and publishing workflow.','planned',null),
+('commerce','Commerce','Orders, catalogues and checkout engine.','planned',null),
+('inventory','Inventory','Stock and inventory operations.','planned',null),
+('booking','Booking','Appointments, rooms and reservations.','planned',null),
+('payments','Payments','Payment processing and reconciliation.','planned',null),
+('projects','Projects','Vertical project and delivery operations.','planned',null),
+('logistics','Logistics','Fleet, shipments and supply chain operations.','planned',null),
+('learning','Learning','Courses, enrolments and learner progress.','planned',null),
+('3d_experience','3D Experience','Interactive 3D web and product experiences.','planned',null),
+('data_fortress','DATA FORTRESS','Backup control metadata only; backup engine not connected.','configuration_only','/backup.html'),
+('private_cloud','PRIVATE CLOUD','Google Drive connection milestone only; file workflows not active.','configuration_only','/private-cloud.html')
+on conflict (module_key) do update
+set display_name = excluded.display_name,
+    description = excluded.description,
+    implementation_status = excluded.implementation_status,
+    route = excluded.route,
+    updated_at = now();
+
+alter table public.zenvio_module_registry enable row level security;
+revoke all on public.zenvio_module_registry from anon, authenticated;
+drop policy if exists zenvio_module_registry_read on public.zenvio_module_registry;
+create policy zenvio_module_registry_read on public.zenvio_module_registry
+for select to authenticated using (true);
+drop policy if exists zenvio_module_registry_super_manage on public.zenvio_module_registry;
+create policy zenvio_module_registry_super_manage on public.zenvio_module_registry
+for all to authenticated
+using (public.zenvio_is_super_admin())
+with check (public.zenvio_is_super_admin());
+grant select, insert, update, delete on public.zenvio_module_registry to authenticated;
+
+alter table public.zenvio_industry_catalog enable row level security;
 alter table public.zenvio_workspace_profiles enable row level security;
 alter table public.zenvio_workspace_modules enable row level security;
 alter table public.zenvio_industry_suggestions enable row level security;
@@ -968,558 +1018,5 @@ revoke all on function public.zenvio_industry_platform_overview() from public, a
 grant execute on function public.zenvio_industry_platform_overview() to authenticated;
 
 
-commit;
-),
-  display_name text not null,
-  description text not null default '',
-  implementation_status text not null default 'planned'
-    check (implementation_status in ('implemented','configuration_only','planned')),
-  route text,
-  updated_at timestamptz not null default now()
-);
-
-insert into public.zenvio_module_registry(module_key,display_name,description,implementation_status,route)
-values
-('mirror','MIRROR','Business digital twin and structured business context.','implemented','/mirror.html'),
-('anticipate','ANTICIPATE','Evidence-based signals and risk review.','implemented','/anticipate.html'),
-('swarm','SWARM','Controlled specialist plans and approval workflow.','implemented','/swarm.html'),
-('blackbox','BLACKBOX','Searchable business memory records.','implemented','/modules.html'),
-('what_if','WHAT IF','Scenario arithmetic and comparison.','implemented','/modules.html'),
-('evolve','EVOLVE','Improvement tracking and measured outcomes.','implemented','/modules.html'),
-('aria','ARIA','Industry-specific AI configuration profile; runtime integration remains in progress.','configuration_only','/intelligence.html'),
-('crm','CRM','Workspace CRM integration; verify feature scope before commercial activation.','configuration_only','/admin'),
-('analytics','Analytics','Industry-specific analytics configuration; vertical data connectors remain in progress.','configuration_only',null),
-('website_studio','Website Studio','Industry website templates and publishing workflow.','planned',null),
-('commerce','Commerce','Orders, catalogues and checkout engine.','planned',null),
-('inventory','Inventory','Stock and inventory operations.','planned',null),
-('booking','Booking','Appointments, rooms and reservations.','planned',null),
-('payments','Payments','Payment processing and reconciliation.','planned',null),
-('projects','Projects','Vertical project and delivery operations.','planned',null),
-('logistics','Logistics','Fleet, shipments and supply chain operations.','planned',null),
-('learning','Learning','Courses, enrolments and learner progress.','planned',null),
-('3d_experience','3D Experience','Interactive 3D web and product experiences.','planned',null),
-('data_fortress','DATA FORTRESS','Backup control metadata only; backup engine not connected.','configuration_only','/backup.html'),
-('private_cloud','PRIVATE CLOUD','Google Drive connection milestone only; file workflows not active.','configuration_only','/private-cloud.html')
-on conflict (module_key) do update
-set display_name = excluded.display_name,
-    description = excluded.description,
-    implementation_status = excluded.implementation_status,
-    route = excluded.route,
-    updated_at = now();
-
-alter table public.zenvio_module_registry enable row level security;
-revoke all on public.zenvio_module_registry from anon, authenticated;
-drop policy if exists zenvio_module_registry_read on public.zenvio_module_registry;
-create policy zenvio_module_registry_read on public.zenvio_module_registry
-for select to authenticated using (true);
-drop policy if exists zenvio_module_registry_super_manage on public.zenvio_module_registry;
-create policy zenvio_module_registry_super_manage on public.zenvio_module_registry
-for all to authenticated
-using (public.zenvio_is_super_admin())
-with check (public.zenvio_is_super_admin());
-grant select, insert, update, delete on public.zenvio_module_registry to authenticated;
-
-alter table public.zenvio_industry_catalog enable row level security;
-alter table public.zenvio_workspace_profiles enable row level security;
-alter table public.zenvio_workspace_modules enable row level security;
-alter table public.zenvio_industry_suggestions enable row level security;
-
-revoke all on public.zenvio_industry_catalog from anon, authenticated;
-revoke all on public.zenvio_workspace_profiles from anon, authenticated;
-revoke all on public.zenvio_workspace_modules from anon, authenticated;
-revoke all on public.zenvio_industry_suggestions from anon, authenticated;
-
-drop policy if exists zenvio_industry_catalog_read on public.zenvio_industry_catalog;
-create policy zenvio_industry_catalog_read
-on public.zenvio_industry_catalog
-for select to authenticated
-using ((is_active and is_published) or public.zenvio_is_super_admin());
-
-drop policy if exists zenvio_industry_catalog_super_insert on public.zenvio_industry_catalog;
-create policy zenvio_industry_catalog_super_insert
-on public.zenvio_industry_catalog
-for insert to authenticated
-with check (public.zenvio_is_super_admin());
-
-drop policy if exists zenvio_industry_catalog_super_update on public.zenvio_industry_catalog;
-create policy zenvio_industry_catalog_super_update
-on public.zenvio_industry_catalog
-for update to authenticated
-using (public.zenvio_is_super_admin())
-with check (public.zenvio_is_super_admin());
-
-drop policy if exists zenvio_industry_catalog_super_delete on public.zenvio_industry_catalog;
-create policy zenvio_industry_catalog_super_delete
-on public.zenvio_industry_catalog
-for delete to authenticated
-using (public.zenvio_is_super_admin());
-
-drop policy if exists zenvio_workspace_profiles_member_read on public.zenvio_workspace_profiles;
-create policy zenvio_workspace_profiles_member_read
-on public.zenvio_workspace_profiles
-for select to authenticated
-using (public.zenvio_is_member(organization_id));
-
-drop policy if exists zenvio_workspace_profiles_owner_insert on public.zenvio_workspace_profiles;
-create policy zenvio_workspace_profiles_owner_insert
-on public.zenvio_workspace_profiles
-for insert to authenticated
-with check (public.zenvio_has_role(organization_id, array['owner','admin']));
-
-drop policy if exists zenvio_workspace_profiles_owner_update on public.zenvio_workspace_profiles;
-create policy zenvio_workspace_profiles_owner_update
-on public.zenvio_workspace_profiles
-for update to authenticated
-using (public.zenvio_has_role(organization_id, array['owner','admin']))
-with check (public.zenvio_has_role(organization_id, array['owner','admin']));
-
-drop policy if exists zenvio_workspace_modules_member_read on public.zenvio_workspace_modules;
-create policy zenvio_workspace_modules_member_read
-on public.zenvio_workspace_modules
-for select to authenticated
-using (public.zenvio_is_member(organization_id));
-
-drop policy if exists zenvio_workspace_modules_owner_manage on public.zenvio_workspace_modules;
-create policy zenvio_workspace_modules_owner_manage
-on public.zenvio_workspace_modules
-for all to authenticated
-using (public.zenvio_has_role(organization_id, array['owner','admin']))
-with check (public.zenvio_has_role(organization_id, array['owner','admin']));
-
-drop policy if exists zenvio_industry_suggestions_submit on public.zenvio_industry_suggestions;
-create policy zenvio_industry_suggestions_submit
-on public.zenvio_industry_suggestions
-for insert to authenticated
-with check (
-  submitted_by = auth.uid()
-  and (organization_id is null or public.zenvio_is_member(organization_id))
-);
-
-drop policy if exists zenvio_industry_suggestions_owner_read on public.zenvio_industry_suggestions;
-create policy zenvio_industry_suggestions_owner_read
-on public.zenvio_industry_suggestions
-for select to authenticated
-using (
-  submitted_by = auth.uid()
-  or public.zenvio_is_super_admin()
-  or (organization_id is not null and public.zenvio_has_role(organization_id, array['owner','admin']))
-);
-
-drop policy if exists zenvio_industry_suggestions_super_update on public.zenvio_industry_suggestions;
-create policy zenvio_industry_suggestions_super_update
-on public.zenvio_industry_suggestions
-for update to authenticated
-using (public.zenvio_is_super_admin())
-with check (public.zenvio_is_super_admin());
-
-grant select on public.zenvio_industry_catalog to authenticated;
-grant insert, update, delete on public.zenvio_industry_catalog to authenticated;
-grant select, insert, update on public.zenvio_workspace_profiles to authenticated;
-grant select, insert, update, delete on public.zenvio_workspace_modules to authenticated;
-grant select, insert, update on public.zenvio_industry_suggestions to authenticated;
-
-create or replace function public.zenvio_apply_industry_workspace_defaults()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  selected_industry public.zenvio_industry_catalog%rowtype;
-  selected_sub public.zenvio_industry_catalog%rowtype;
-  module_name text;
-  modules_to_enable text[];
-begin
-  if new.industry_node_id is not null then
-    select * into selected_industry
-    from public.zenvio_industry_catalog
-    where id = new.industry_node_id and level = 'industry' and is_active and is_published;
-
-    if not found then
-      raise exception 'Selected industry is unavailable';
-    end if;
-  end if;
-
-  if new.sub_industry_node_id is not null then
-    select * into selected_sub
-    from public.zenvio_industry_catalog
-    where id = new.sub_industry_node_id
-      and level = 'sub_industry'
-      and parent_id = new.industry_node_id
-      and is_active and is_published;
-
-    if not found then
-      raise exception 'Selected sub-industry does not belong to the selected industry';
-    end if;
-  end if;
-
-  modules_to_enable := coalesce(selected_sub.default_modules, selected_industry.default_modules,
-    array['mirror','anticipate','swarm','blackbox','what_if','evolve','aria','crm','analytics']::text[]);
-
-  insert into public.zenvio_workspace_profiles (
-    organization_id, industry_id, sub_industry_id, business_type, aria_profile, dashboard_layout
-  )
-  values (
-    new.id, new.industry_node_id, new.sub_industry_node_id,
-    coalesce(nullif(trim(new.business_type), ''), 'General Business'),
-    coalesce(selected_sub.aria_profile, selected_industry.aria_profile, '{"tone":"professional","mode":"industry_assistant"}'::jsonb),
-    coalesce(selected_sub.dashboard_layout, selected_industry.dashboard_layout, '{"version":1,"layout":"industry_default","widgets":[]}'::jsonb)
-  )
-  on conflict (organization_id) do update
-  set industry_id = excluded.industry_id,
-      sub_industry_id = excluded.sub_industry_id,
-      business_type = excluded.business_type,
-      aria_profile = excluded.aria_profile,
-      dashboard_layout = excluded.dashboard_layout,
-      updated_at = now();
-
-  foreach module_name in array modules_to_enable loop
-    insert into public.zenvio_workspace_modules(organization_id, module_key, enabled, source)
-    values (new.id, module_name, true, 'industry_default')
-    on conflict (organization_id, module_key) do nothing;
-  end loop;
-
-  return new;
-end;
-$$;
-
-drop trigger if exists zenvio_org_industry_defaults on public.zenvio_organizations;
-create trigger zenvio_org_industry_defaults
-after insert or update of industry_node_id, sub_industry_node_id, business_type
-on public.zenvio_organizations
-for each row execute function public.zenvio_apply_industry_workspace_defaults();
-
-create or replace function public.zenvio_submit_industry_suggestion(
-  p_organization_id uuid,
-  p_parent_node_id uuid,
-  p_proposed_level text,
-  p_proposed_name text,
-  p_reason text default null
-)
-returns uuid
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare suggestion_id uuid;
-begin
-  if auth.uid() is null then
-    raise exception 'Authentication required';
-  end if;
-
-  if p_organization_id is not null
-     and not public.zenvio_is_member(p_organization_id) then
-    raise exception 'Workspace membership required';
-  end if;
-
-  if p_proposed_level not in ('industry','sub_industry') then
-    raise exception 'Invalid industry level';
-  end if;
-
-  if char_length(trim(coalesce(p_proposed_name, ''))) not between 2 and 140 then
-    raise exception 'Enter a valid industry name';
-  end if;
-
-  if p_proposed_level = 'industry' and p_parent_node_id is not null then
-    raise exception 'A top-level industry cannot have a parent';
-  end if;
-
-  if p_proposed_level = 'sub_industry' and not exists (
-    select 1 from public.zenvio_industry_catalog
-    where id = p_parent_node_id and level = 'industry' and is_active
-  ) then
-    raise exception 'Select a valid parent industry';
-  end if;
-
-  insert into public.zenvio_industry_suggestions(
-    organization_id, submitted_by, parent_node_id, proposed_level, proposed_name, reason
-  )
-  values (
-    p_organization_id, auth.uid(), p_parent_node_id, p_proposed_level,
-    trim(p_proposed_name), nullif(trim(coalesce(p_reason, '')), '')
-  )
-  returning id into suggestion_id;
-
-  return suggestion_id;
-end;
-$$;
-
-revoke all on function public.zenvio_submit_industry_suggestion(uuid, uuid, text, text, text)
-from public, anon;
-grant execute on function public.zenvio_submit_industry_suggestion(uuid, uuid, text, text, text)
-to authenticated;
-
-create or replace function public.zenvio_review_industry_suggestion(
-  p_suggestion_id uuid,
-  p_decision text
-)
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  suggestion public.zenvio_industry_suggestions%rowtype;
-  new_node_id uuid;
-  parent_slug text;
-  new_slug text;
-begin
-  if not public.zenvio_is_super_admin() then
-    raise exception 'Super Admin access required';
-  end if;
-
-  if p_decision not in ('approve','reject') then
-    raise exception 'Decision must be approve or reject';
-  end if;
-
-  select * into suggestion
-  from public.zenvio_industry_suggestions
-  where id = p_suggestion_id and status = 'pending'
-  for update;
-
-  if not found then
-    raise exception 'Pending suggestion not found';
-  end if;
-
-  if p_decision = 'reject' then
-    update public.zenvio_industry_suggestions
-    set status = 'rejected', reviewed_by = auth.uid(), reviewed_at = now()
-    where id = p_suggestion_id;
-    return jsonb_build_object('status','rejected');
-  end if;
-
-  if suggestion.proposed_level = 'sub_industry' then
-    select slug into parent_slug from public.zenvio_industry_catalog
-    where id = suggestion.parent_node_id and level = 'industry';
-    if parent_slug is null then raise exception 'Parent industry no longer exists'; end if;
-    new_slug := parent_slug || '-' || trim(both '-' from regexp_replace(lower(suggestion.proposed_name), '[^a-z0-9]+', '-', 'g'));
-  else
-    new_slug := trim(both '-' from regexp_replace(lower(suggestion.proposed_name), '[^a-z0-9]+', '-', 'g'));
-  end if;
-
-  insert into public.zenvio_industry_catalog(
-    parent_id, level, name, slug, description, created_by, sort_order
-  )
-  values (
-    case when suggestion.proposed_level = 'sub_industry' then suggestion.parent_node_id else null end,
-    suggestion.proposed_level,
-    suggestion.proposed_name,
-    new_slug,
-    'Added from owner industry suggestion.',
-    auth.uid(),
-    900
-  )
-  returning id into new_node_id;
-
-  update public.zenvio_industry_suggestions
-  set status = 'approved', reviewed_by = auth.uid(), reviewed_at = now()
-  where id = p_suggestion_id;
-
-  return jsonb_build_object('status','approved','industry_node_id',new_node_id);
-end;
-$$;
-
-revoke all on function public.zenvio_review_industry_suggestion(uuid, text)
-from public, anon;
-grant execute on function public.zenvio_review_industry_suggestion(uuid, text)
-to authenticated;
-
-
--- Industry changes use an explicit request/review workflow; browser updates cannot bypass it.
-create table if not exists public.zenvio_industry_change_requests (
-  id uuid primary key default gen_random_uuid(),
-  organization_id uuid not null references public.zenvio_organizations(id) on delete cascade,
-  requested_by uuid not null references auth.users(id) on delete restrict,
-  current_industry_id uuid references public.zenvio_industry_catalog(id) on delete set null,
-  current_sub_industry_id uuid references public.zenvio_industry_catalog(id) on delete set null,
-  proposed_industry_id uuid not null references public.zenvio_industry_catalog(id) on delete restrict,
-  proposed_sub_industry_id uuid not null references public.zenvio_industry_catalog(id) on delete restrict,
-  proposed_business_type text not null check (char_length(trim(proposed_business_type)) between 2 and 140),
-  reason text,
-  status text not null default 'pending' check (status in ('pending','approved','rejected')),
-  reviewed_by uuid references auth.users(id) on delete set null,
-  reviewed_at timestamptz,
-  created_at timestamptz not null default now()
-);
-
-alter table public.zenvio_industry_change_requests enable row level security;
-revoke all on public.zenvio_industry_change_requests from anon, authenticated;
-
-drop policy if exists zenvio_industry_change_request_read on public.zenvio_industry_change_requests;
-create policy zenvio_industry_change_request_read
-on public.zenvio_industry_change_requests
-for select to authenticated
-using (
-  public.zenvio_is_super_admin()
-  or public.zenvio_has_role(organization_id, array['owner','admin'])
-);
-
-grant select on public.zenvio_industry_change_requests to authenticated;
-
-create or replace function public.zenvio_guard_industry_profile_change()
-returns trigger
-language plpgsql
-set search_path = ''
-as $$
-begin
-  if (
-    new.industry_node_id is distinct from old.industry_node_id
-    or new.sub_industry_node_id is distinct from old.sub_industry_node_id
-    or new.business_type is distinct from old.business_type
-  ) and coalesce(current_setting('zenvio.industry_change_approved', true), '') <> 'yes' then
-    raise exception 'Industry changes must be submitted for review from the workspace settings';
-  end if;
-  return new;
-end;
-$$;
-
-drop trigger if exists zenvio_org_industry_change_guard on public.zenvio_organizations;
-create trigger zenvio_org_industry_change_guard
-before update of industry_node_id, sub_industry_node_id, business_type
-on public.zenvio_organizations
-for each row execute function public.zenvio_guard_industry_profile_change();
-
-create or replace function public.zenvio_request_industry_change(
-  p_organization_id uuid,
-  p_industry_id uuid,
-  p_sub_industry_id uuid,
-  p_business_type text,
-  p_reason text default null
-)
-returns uuid
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  current_org public.zenvio_organizations%rowtype;
-  new_request_id uuid;
-begin
-  if auth.uid() is null or not public.zenvio_has_role(p_organization_id, array['owner','admin']) then
-    raise exception 'Workspace owner/admin access required';
-  end if;
-
-  select * into current_org
-  from public.zenvio_organizations
-  where id = p_organization_id
-  for update;
-
-  if not found then raise exception 'Workspace not found'; end if;
-
-  if not exists (
-    select 1 from public.zenvio_industry_catalog
-    where id = p_industry_id and level = 'industry' and is_active and is_published
-  ) then raise exception 'Choose a published industry'; end if;
-
-  if not exists (
-    select 1 from public.zenvio_industry_catalog
-    where id = p_sub_industry_id and parent_id = p_industry_id
-      and level = 'sub_industry' and is_active and is_published
-  ) then raise exception 'Choose a sub-industry under the selected industry'; end if;
-
-  if char_length(trim(coalesce(p_business_type, ''))) not between 2 and 140 then
-    raise exception 'Enter a valid business type';
-  end if;
-
-  if exists (
-    select 1 from public.zenvio_industry_change_requests
-    where organization_id = p_organization_id and status = 'pending'
-  ) then raise exception 'A workspace industry change is already awaiting review'; end if;
-
-  insert into public.zenvio_industry_change_requests(
-    organization_id, requested_by, current_industry_id, current_sub_industry_id,
-    proposed_industry_id, proposed_sub_industry_id, proposed_business_type, reason
-  )
-  values (
-    p_organization_id, auth.uid(), current_org.industry_node_id, current_org.sub_industry_node_id,
-    p_industry_id, p_sub_industry_id, trim(p_business_type), nullif(trim(coalesce(p_reason, '')), '')
-  )
-  returning id into new_request_id;
-
-  return new_request_id;
-end;
-$$;
-
-create or replace function public.zenvio_review_industry_change(
-  p_request_id uuid,
-  p_decision text
-)
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  change_request public.zenvio_industry_change_requests%rowtype;
-  target_industry public.zenvio_industry_catalog%rowtype;
-  target_sub public.zenvio_industry_catalog%rowtype;
-  module_name text;
-  next_modules text[];
-begin
-  if not public.zenvio_is_super_admin() then raise exception 'Super Admin access required'; end if;
-  if p_decision not in ('approve','reject') then raise exception 'Decision must be approve or reject'; end if;
-
-  select * into change_request
-  from public.zenvio_industry_change_requests
-  where id = p_request_id and status = 'pending'
-  for update;
-
-  if not found then raise exception 'Pending industry change request not found'; end if;
-
-  if p_decision = 'reject' then
-    update public.zenvio_industry_change_requests
-    set status = 'rejected', reviewed_by = auth.uid(), reviewed_at = now()
-    where id = p_request_id;
-    return pg_catalog.jsonb_build_object('status','rejected');
-  end if;
-
-  select * into target_industry
-  from public.zenvio_industry_catalog
-  where id = change_request.proposed_industry_id and level = 'industry'
-    and is_active and is_published;
-  if not found then raise exception 'Proposed industry is no longer available'; end if;
-
-  select * into target_sub
-  from public.zenvio_industry_catalog
-  where id = change_request.proposed_sub_industry_id
-    and parent_id = target_industry.id and level = 'sub_industry'
-    and is_active and is_published;
-  if not found then raise exception 'Proposed sub-industry is no longer available'; end if;
-
-  perform pg_catalog.set_config('zenvio.industry_change_approved','yes',true);
-
-  update public.zenvio_organizations
-  set industry = target_industry.name || ' / ' || target_sub.name,
-      industry_node_id = target_industry.id,
-      sub_industry_node_id = target_sub.id,
-      business_type = change_request.proposed_business_type
-  where id = change_request.organization_id;
-
-  next_modules := target_sub.default_modules;
-
-  update public.zenvio_workspace_modules
-  set enabled = false, source = 'owner_disabled', updated_at = now()
-  where organization_id = change_request.organization_id
-    and source = 'industry_default'
-    and not (module_key = any(next_modules));
-
-  foreach module_name in array next_modules loop
-    insert into public.zenvio_workspace_modules(organization_id, module_key, enabled, source)
-    values (change_request.organization_id, module_name, true, 'industry_default')
-    on conflict (organization_id, module_key) do nothing;
-  end loop;
-
-  update public.zenvio_industry_change_requests
-  set status = 'approved', reviewed_by = auth.uid(), reviewed_at = now()
-  where id = p_request_id;
-
-  return pg_catalog.jsonb_build_object('status','approved','organization_id',change_request.organization_id);
-end;
-$$;
-
-revoke all on function public.zenvio_request_industry_change(uuid, uuid, uuid, text, text) from public, anon;
-revoke all on function public.zenvio_review_industry_change(uuid, text) from public, anon;
-grant execute on function public.zenvio_request_industry_change(uuid, uuid, uuid, text, text) to authenticated;
-grant execute on function public.zenvio_review_industry_change(uuid, text) to authenticated;
 
 commit;
