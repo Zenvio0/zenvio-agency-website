@@ -412,7 +412,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare module_status text;
 begin
   select implementation_status into module_status
@@ -437,7 +437,7 @@ begin
 
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists zenvio_workspace_module_status_guard on public.zenvio_workspace_modules;
 create trigger zenvio_workspace_module_status_guard
