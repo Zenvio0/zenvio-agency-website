@@ -120,19 +120,21 @@ $("orgSelect").addEventListener("change",async()=>{activeOrg=$("orgSelect").valu
 async function logEvent(type,entity,id,summary,metadata={}){const {error}=await db.from("zenvio_events").insert({organization_id:activeOrg,actor_user_id:session.user.id,event_type:type,entity_type:entity,entity_id:id,summary,metadata});if(error)console.warn("Event logging:",error.message);}
 async function loadOrgData(){if(!activeOrg)return;await Promise.all([loadDepartments(),loadTasks(),loadEvents(),loadIndustryWorkspace()]);}
 async function loadIndustryWorkspace(){
- const [{data:profile,error:profileError},{data:modules,error:moduleError},{data:requests,error:requestError}] = await Promise.all([
+ const [{data:profile,error:profileError},{data:modules,error:moduleError},{data:requests,error:requestError},{data:registry,error:registryError}] = await Promise.all([
   db.from("zenvio_workspace_profiles").select("business_type,company_size,website_url,location,description,aria_profile,industry_id,sub_industry_id,dashboard_layout").eq("organization_id",activeOrg).maybeSingle(),
   db.from("zenvio_workspace_modules").select("module_key,enabled,source").eq("organization_id",activeOrg).order("module_key"),
-  db.from("zenvio_industry_change_requests").select("status,created_at,proposed_business_type").eq("organization_id",activeOrg).order("created_at",{ascending:false}).limit(1)
+  db.from("zenvio_industry_change_requests").select("status,created_at,proposed_business_type").eq("organization_id",activeOrg).order("created_at",{ascending:false}).limit(1),
+  db.from("zenvio_module_registry").select("module_key,display_name,implementation_status,description,route")
  ]);
- if(profileError||moduleError||requestError){$("industryWorkspaceSummary").textContent=(profileError||moduleError||requestError).message;return;}
+ if(profileError||moduleError||requestError||registryError){$("industryWorkspaceSummary").textContent=(profileError||moduleError||requestError||registryError).message;return;}
  const org=$("orgSelect").selectedOptions[0]?.textContent||"Workspace";
  const industry=industryCatalog.find(x=>x.id===profile?.industry_id)?.name||"Industry not set";
  const {data:sub}=profile?.sub_industry_id?await db.from("zenvio_industry_catalog").select("name").eq("id",profile.sub_industry_id).maybeSingle():{data:null};
  $("industryWorkspaceSummary").innerHTML='<b>'+esc(org)+'</b><div class="muted small">'+esc(industry)+' / '+esc(sub?.name||"")+' / '+esc(profile?.business_type||"Business")+'</div><div class="muted small">'+esc(profile?.location||"Location not added")+' · '+esc(profile?.website_url||"Website not added")+'</div><div class="muted small">'+esc(profile?.description||"Add business details to improve workspace context.")+'</div>';
  const widgets=profile?.dashboard_layout?.widgets||[];
  $("industryWidgetList").innerHTML=widgets.map(w=>'<div class="card"><div class="module">'+esc(industry.toUpperCase())+'</div><div class="metric" style="font-size:16px">'+esc(String(w).replaceAll("_"," ").toUpperCase())+'</div><div class="muted small">Industry dashboard slot · connect its operational data source to activate</div></div>').join("");
- $("moduleList").innerHTML=(modules||[]).map(m=>'<div class="item"><span>'+esc(m.module_key.replaceAll("_"," ").toUpperCase())+'</span><span class="pill">'+(m.enabled?"Enabled":"Disabled")+'</span></div>').join("")||'<div class="empty">No modules configured. Apply the industry workspace migration.</div>';
+ const registryMap=new Map((registry||[]).map(x=>[x.module_key,x]));
+ $("moduleList").innerHTML=(modules||[]).map(m=>{const meta=registryMap.get(m.module_key)||{};const status=meta.implementation_status||"unregistered";return '<div class="item"><div><b>'+esc(meta.display_name||m.module_key.replaceAll("_"," ").toUpperCase())+'</b><div class="muted small">'+esc(meta.description||"Workspace module configuration")+"</div></div><span class="pill">"+(m.enabled?"Configured":"Disabled")+" · "+esc(status.replaceAll("_"," "))+"</span></div>";}).join("")||'<div class="empty">No modules configured. Apply the industry workspace migration.</div>';
  const latest=(requests||[])[0];$("industryChangeStatus").textContent=latest?"Latest industry change request: "+latest.status+" · "+latest.proposed_business_type+" · "+new Date(latest.created_at).toLocaleString():"No industry change requests.";
 }
 $("industrySuggestionForm").addEventListener("submit",async e=>{
