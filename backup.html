@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090812"><title>ZENVIO DATA FORTRESS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#090812;--panel:#151322;--line:#ffffff19;--muted:#a09caf;--purple:#a78bfa;--cyan:#67d5ff;--green:#8ef0c2;--amber:#ffd18b;--red:#ff9baa}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 82% 0%,#6543a52b,transparent 36%),var(--bg);color:#f8f7ff;font:14px Inter,system-ui,sans-serif}
+button,input,select{font:inherit}.shell{max-width:1240px;margin:auto;padding:26px 22px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:10px 0 22px;border-bottom:1px solid var(--line)}
+.brand{font-size:23px;font-weight:850;letter-spacing:-1px}.brand span{color:var(--purple)}.eyebrow{color:#c5b2ff;font-size:10px;letter-spacing:3px;text-transform:uppercase}.muted{color:var(--muted)}
+.btn{display:inline-block;border:1px solid #b8a4ff55;background:linear-gradient(110deg,#c4b5fd,#8b75ef);color:#100d1c;border-radius:7px;padding:10px 14px;font-weight:750;text-decoration:none;cursor:pointer}.btn.secondary{background:#ffffff08;color:#eee;border-color:var(--line)}
+.hero{padding:34px 0 20px}.hero h1{font-size:clamp(35px,6vw,58px);letter-spacing:-3px;margin:9px 0}.hero p{max-width:800px;line-height:1.8;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.panel{background:linear-gradient(145deg,#19172a,#11101b);border:1px solid var(--line);border-radius:13px;padding:18px}.metric{font-size:27px;font-weight:850;margin:10px 0 4px}.tag{font-size:10px;color:#c7b8ff;letter-spacing:1.5px;text-transform:uppercase}
+.layout{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}.notice{padding:14px;border:1px solid #a78bfa44;background:#a78bfa0c;border-radius:9px;color:#ded5ff;line-height:1.7;margin:14px 0}
+.list{display:grid;gap:9px;margin-top:12px}.item{background:#ffffff06;border:1px solid var(--line);border-radius:8px;padding:13px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.pill{font-size:10px;padding:5px 8px;border-radius:20px;background:#ffd18b18;color:var(--amber);white-space:nowrap}.pill.good{background:#8ef0c218;color:var(--green)}.pill.bad{background:#ff9baa18;color:var(--red)}
+.field{display:grid;gap:7px;margin:12px 0}.field label{font-size:11px;color:#c7c2d4}.field select,.field input{width:100%;background:#0b0a13;border:1px solid var(--line);border-radius:7px;padding:11px;color:white}
+.error{color:var(--red);font-size:12px;min-height:18px}.empty{color:var(--muted);padding:10px 0;line-height:1.6}.hidden{display:none!important}.auth{max-width:430px;margin:12vh auto}.auth h1{font-size:30px}
+footer{text-align:center;color:#797587;padding:28px 0;font-size:11px}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}}@media(max-width:580px){.grid{grid-template-columns:1fr 1fr}.top{align-items:flex-start;flex-direction:column}.shell{padding:16px}}@media(max-width:380px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body>
+<div id="authView" class="panel auth">
+ <div class="eyebrow">ZENVIO ONE · DATA FORTRESS</div><h1>Secure sign in</h1>
+ <p class="muted">Use your existing ZENVIO account. Backup controls are visible to organization owners and admins.</p>
+ <form id="loginForm"><div class="field"><label>Email</label><input id="email" type="email" autocomplete="username" required></div><div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password" required></div><button class="btn" id="loginBtn">Sign in</button><div id="authError" class="error"></div></form>
+</div>
+<div id="app" class="shell hidden">
+ <header class="top"><div><div class="brand">ZEN<span>VIO</span> DATA FORTRESS</div><div class="eyebrow">BACKUP · RECOVERY · DATA OWNERSHIP</div></div><div class="row"><a class="btn secondary" href="/one.html">← ZENVIO ONE</a> <button class="btn secondary" id="logoutBtn">Sign out</button></div></header>
+ <section class="hero"><div class="eyebrow">INDEPENDENT DATA PROTECTION</div><h1>Your business data.<br><span style="color:var(--purple)">Under your control.</span></h1><p>Review backup policy, external destinations, verified backup history and restore-test evidence for your organization.</p></section>
+ <div class="notice"><strong>Foundation milestone — backup engine not connected.</strong> This page currently displays backup-control metadata only. No backup is being created, no external storage is connected, and no recovery guarantee is active yet. A run will only count as protected after an independent backup is uploaded, checksum-verified and successfully restore-tested.</div>
+ <div class="field" style="max-width:520px"><label>Active organization</label><select id="orgSelect"><option value="">Loading organizations…</option></select><div id="orgError" class="error"></div></div>
+ <div class="grid">
+  <div class="panel"><div class="tag">Backup engine</div><div class="metric" id="engineMetric">Not connected</div><div class="muted">No scheduled jobs deployed</div></div>
+  <div class="panel"><div class="tag">Verified backups</div><div class="metric" id="verifiedMetric">—</div><div class="muted">Only checksum-verified runs</div></div>
+  <div class="panel"><div class="tag">Connected destinations</div><div class="metric" id="destinationMetric">—</div><div class="muted">Independent storage targets</div></div>
+  <div class="panel"><div class="tag">Passed restore tests</div><div class="metric" id="restoreMetric">—</div><div class="muted">Recovery evidence</div></div>
+ </div>
+ <div class="layout">
+  <section class="panel"><div class="tag">01 / Protection policy</div><h2>Backup schedule & retention</h2><div id="policyView" class="empty">Select an organization.</div></section>
+  <section class="panel"><div class="tag">02 / External storage</div><h2>Backup destinations</h2><div id="destinationList" class="list"><div class="empty">Select an organization.</div></div><p class="muted">Credentials must be stored in server-side secrets, never in this database or browser.</p></section>
+  <section class="panel"><div class="tag">03 / Backup history</div><h2>Recent backup runs</h2><div id="runList" class="list"><div class="empty">Select an organization.</div></div></section>
+  <section class="panel"><div class="tag">04 / Disaster recovery</div><h2>Restore test history</h2><div id="restoreList" class="list"><div class="empty">Select an organization.</div></div></section>
+ </div>
+ <footer>ZENVIO DATA FORTRESS v0.1 · Control metadata only · No backup claims until verified</footer>
+</div>
+<script>
+const SUPABASE_URL="https://bohblrqrkkfmqwvtulcs.supabase.co";
+const SUPABASE_KEY="sb_publishable_kDAD7Eo3LDNKO7T18niELA_qGFdq8D9";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let session=null,activeOrg=null;
+function errorText(e){return e?.message||String(e||"Unknown error")}
+function pill(status){const good=["verified","passed","connected"].includes(status);const bad=["failed","revoked"].includes(status);return '<span class="pill '+(good?"good":bad?"bad":"")+'">'+esc(status||"unknown")+'</span>'}
+function fmtDate(v){return v?new Date(v).toLocaleString():"Not recorded"}
+function showError(id,e){$(id).textContent=errorText(e)}
+async function start(s){
+ session=s;$("authView").classList.add("hidden");$("app").classList.remove("hidden");
+ const {data,error}=await db.from("zenvio_organizations").select("id,name").order("created_at",{ascending:false});
+ if(error){showError("orgError",error);$("orgSelect").innerHTML='<option value="">Unable to load organizations</option>';return}
+ $("orgSelect").innerHTML=data.length?data.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>').join(""):'<option value="">No organization found</option>';
+ if(data.length){activeOrg=data[0].id;await loadOrg()}
+}
+async function loadOrg(){
+ if(!activeOrg)return;
+ $("orgError").textContent="";
+ const [p,d,r,t]=await Promise.all([
+  db.from("zenvio_backup_policies").select("*").eq("organization_id",activeOrg).maybeSingle(),
+  db.from("zenvio_backup_destinations").select("id,provider,label,bucket_name,endpoint_host,region,connection_status,last_connection_check_at").eq("organization_id",activeOrg).order("created_at",{ascending:false}),
+  db.from("zenvio_backup_runs").select("id,backup_type,trigger_type,status,started_at,completed_at,verified_at,bytes_written,object_count,safe_error_code,safe_error_message").eq("organization_id",activeOrg).order("created_at",{ascending:false}).limit(10),
+  db.from("zenvio_restore_tests").select("id,status,started_at,completed_at,recovery_duration_seconds,restored_object_count,checksum_mismatch_count,summary").eq("organization_id",activeOrg).order("created_at",{ascending:false}).limit(10)
+ ]);
+ const failure=[p,d,r,t].find(x=>x.error);
+ if(failure){$("policyView").innerHTML='<div class="empty">Backup schema is not installed yet. Apply <code>20261119_zenvio_data_fortress.sql</code> in Supabase SQL Editor, then reload this page.<br><br>'+esc(errorText(failure.error))+'</div>';return}
+ const policy=p.data;
+ $("policyView").innerHTML=policy?'<div class="item"><span>Policy status</span>'+pill(policy.enabled?"enabled":"disabled")+'</div><div class="item"><span>Schedule</span><strong>'+esc(policy.schedule_cron)+' · '+esc(policy.timezone)+'</strong></div><div class="item"><span>Daily retention</span><strong>'+esc(policy.daily_retention_days)+' days</strong></div><div class="item"><span>Weekly retention</span><strong>'+esc(policy.weekly_retention_weeks)+' weeks</strong></div><div class="item"><span>Monthly retention</span><strong>'+esc(policy.monthly_retention_months)+' months</strong></div><div class="item"><span>Immutable retention target</span><strong>'+esc(policy.immutable_retention_days)+' days</strong></div><div class="item"><span>RPO / RTO targets</span><strong>'+esc(policy.rpo_target_minutes)+' / '+esc(policy.rto_target_minutes)+' min</strong></div>':'<div class="empty">No backup policy record exists yet. Policy creation and activation will be enabled after the backup worker and destination verification are deployed.</div>';
+ const destinations=d.data||[],runs=r.data||[],tests=t.data||[];
+ $("destinationMetric").textContent=destinations.filter(x=>x.connection_status==="connected").length;
+ $("verifiedMetric").textContent=runs.filter(x=>x.status==="verified").length;
+ $("restoreMetric").textContent=tests.filter(x=>x.status==="passed").length;
+ $("destinationList").innerHTML=destinations.length?destinations.map(x=>'<div class="item"><div><strong>'+esc(x.label)+'</strong><div class="muted">'+esc(x.provider)+' · '+esc(x.bucket_name||x.endpoint_host||"Target details pending")+'</div><div class="muted">Last check: '+fmtDate(x.last_connection_check_at)+'</div></div>'+pill(x.connection_status)+'</div>').join(""):'<div class="empty">No external storage destination has been configured.</div>';
+ $("runList").innerHTML=runs.length?runs.map(x=>'<div class="item"><div><strong>'+esc(x.backup_type)+' · '+esc(x.trigger_type)+'</strong><div class="muted">Completed: '+fmtDate(x.completed_at)+' · Verified: '+fmtDate(x.verified_at)+'</div><div class="muted">'+esc(x.object_count??"—")+' objects · '+esc(x.bytes_written??"—")+' bytes</div>'+(x.safe_error_code?'<div class="error">'+esc(x.safe_error_code)+' · '+esc(x.safe_error_message||"")+'</div>':'')+'</div>'+pill(x.status)+'</div>').join(""):'<div class="empty">No backup runs recorded. This is not evidence that a backup exists elsewhere.</div>';
+ $("restoreList").innerHTML=tests.length?tests.map(x=>'<div class="item"><div><strong>Restore verification</strong><div class="muted">Completed: '+fmtDate(x.completed_at)+'</div><div class="muted">'+esc(x.restored_object_count??"—")+' objects restored · '+esc(x.checksum_mismatch_count??"—")+' checksum mismatches</div><div class="muted">'+esc(x.summary||"No test summary")+'</div></div>'+pill(x.status)+'</div>').join(""):'<div class="empty">No restore tests recorded. Recovery has not yet been proven.</div>';
+}
+$("orgSelect").addEventListener("change",async()=>{activeOrg=$("orgSelect").value;await loadOrg()});
+$("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginBtn").disabled=true;const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});$("loginBtn").disabled=false;if(error){showError("authError",error);return}await start(data.session)});
+$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();location.reload()});
+db.auth.getSession().then(({data})=>{if(data?.session)start(data.session)});
+db.auth.onAuthStateChange((event)=>{if(event==="SIGNED_OUT")location.reload()});
+</script>
+</body></html>
