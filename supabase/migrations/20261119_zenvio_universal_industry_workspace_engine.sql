@@ -789,6 +789,50 @@ revoke all on function public.zenvio_review_industry_change(uuid, text) from pub
 grant execute on function public.zenvio_request_industry_change(uuid, uuid, uuid, text, text) to authenticated;
 grant execute on function public.zenvio_review_industry_change(uuid, text) to authenticated;
 
+
+create or replace function public.zenvio_industry_platform_overview()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $
+declare result jsonb;
+begin
+  if not public.zenvio_is_super_admin() then
+    raise exception 'Super Admin access required';
+  end if;
+
+  select coalesce(pg_catalog.jsonb_agg(
+    pg_catalog.jsonb_build_object(
+      'organization_id', o.id,
+      'organization_name', o.name,
+      'industry', i.name,
+      'sub_industry', si.name,
+      'business_type', coalesce(p.business_type, o.business_type),
+      'module_count', (
+        select pg_catalog.count(*)
+        from public.zenvio_workspace_modules wm
+        where wm.organization_id = o.id and wm.enabled
+      ),
+      'dashboard_layout', p.dashboard_layout,
+      'created_at', o.created_at
+    ) order by o.created_at desc
+  ), '[]'::jsonb)
+  into result
+  from public.zenvio_organizations o
+  left join public.zenvio_industry_catalog i on i.id = o.industry_node_id
+  left join public.zenvio_industry_catalog si on si.id = o.sub_industry_node_id
+  left join public.zenvio_workspace_profiles p on p.organization_id = o.id;
+
+  return result;
+end;
+$;
+
+revoke all on function public.zenvio_industry_platform_overview() from public, anon;
+grant execute on function public.zenvio_industry_platform_overview() to authenticated;
+
+
 commit;
 ),
   display_name text not null,
