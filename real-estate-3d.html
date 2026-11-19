@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090812">
+<title>Maison Noire — ZENVIO 3D World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080710;--panel:#11101ceF;--line:#ffffff20;--muted:#a8a2b7;--purple:#b49aff;--cyan:#8ce4ff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:#fff;font-family:'DM Sans',sans-serif}
+#world{position:fixed;inset:0}canvas{display:block}
+.topbar{position:fixed;z-index:5;top:0;left:0;right:0;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(#080710d9,transparent);pointer-events:none}.topbar>*{pointer-events:auto}
+.brand{font:700 18px 'Space Grotesk';letter-spacing:2px}.brand b{color:var(--purple)}.brand small{display:block;font:600 9px 'DM Sans';letter-spacing:3px;color:#bcb4d0;margin-top:3px}
+.topright{display:flex;gap:9px;align-items:center}.glass{border:1px solid var(--line);background:#100f1bcc;backdrop-filter:blur(16px);color:#fff;border-radius:8px;padding:10px 13px;font-size:11px;text-decoration:none;cursor:pointer}
+.hero{position:fixed;z-index:4;left:5vw;top:22%;max-width:390px;pointer-events:none;transition:opacity .5s}.eyebrow{font-size:9px;letter-spacing:3px;color:#c9b6ff;text-transform:uppercase}.hero h1{font:600 clamp(42px,6vw,76px)/.94 'Space Grotesk';letter-spacing:-3px;margin:17px 0}.hero h1 span{color:#c4afff}.hero p{font-size:13px;line-height:1.8;color:#d0cadb;max-width:340px}.hero .hint{margin-top:25px;color:#a9a2b8;font-size:10px;letter-spacing:1px}
+.bottom{position:fixed;z-index:5;left:50%;bottom:22px;transform:translateX(-50%);display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:12px;background:#0b0a14d9;backdrop-filter:blur(18px);max-width:94vw;overflow:auto}
+.bottom button,.action{border:1px solid transparent;background:transparent;color:#c7c1d4;padding:11px 13px;border-radius:7px;font-size:10px;white-space:nowrap;cursor:pointer}.bottom button.active,.bottom button:hover{background:#b49aff20;border-color:#b49aff66;color:#fff}
+.panel{position:fixed;z-index:6;right:24px;top:50%;transform:translateY(-50%);width:min(310px,calc(100vw - 36px));padding:20px;border:1px solid var(--line);border-radius:13px;background:#0e0d18eF;backdrop-filter:blur(20px);box-shadow:0 20px 80px #0008;display:none}.panel.show{display:block}.panel .close{float:right;background:none;border:0;color:#aaa;font-size:20px;cursor:pointer}.panel h2{font:600 22px 'Space Grotesk';margin:10px 0}.panel p{font-size:12px;line-height:1.8;color:var(--muted)}.tag{display:inline-block;padding:5px 8px;border-radius:30px;background:#b49aff1b;color:#cbbaff;font-size:9px;letter-spacing:1px}
+.start{position:fixed;z-index:10;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 35%,#34245488,transparent 48%),#080710eF;transition:opacity .5s}.start.hide{opacity:0;pointer-events:none}.startcard{text-align:center;width:min(520px,90vw);padding:35px 25px}.startcard .brand{margin-bottom:38px}.startcard h2{font:600 clamp(34px,6vw,58px)/1 'Space Grotesk';letter-spacing:-2px;margin:15px 0}.startcard p{color:var(--muted);font-size:13px;line-height:1.8}.primary{border:0;background:linear-gradient(110deg,#d1c3ff,#9478ef);color:#100d1b;border-radius:7px;padding:14px 22px;font-weight:800;font-size:11px;letter-spacing:.5px;cursor:pointer;margin-top:17px}.crosshair{position:fixed;z-index:3;left:50%;top:50%;width:5px;height:5px;border:1px solid #ffffffaa;border-radius:50%;transform:translate(-50%,-50%);display:none;pointer-events:none}.crosshair.show{display:block}.toast{position:fixed;z-index:8;left:50%;top:90px;transform:translateX(-50%);background:#11101deF;border:1px solid var(--line);padding:10px 14px;border-radius:8px;color:#e8e2f7;font-size:11px;opacity:0;transition:.25s;pointer-events:none}.toast.show{opacity:1}
+@media(max-width:650px){.topbar{padding:14px}.topright .glass:first-child{display:none}.hero{top:18%;left:7vw;max-width:80vw}.hero h1{font-size:45px}.hero p{font-size:11px;max-width:270px}.bottom{bottom:10px}.bottom button{padding:10px}.panel{right:10px;top:auto;bottom:78px;transform:none}.brand{font-size:15px}}
+</style>
+</head>
+<body>
+<div id="world"></div>
+<header class="topbar"><div class="brand">ZEN<span>VIO</span><b>®</b><small>3D WORLD EXPERIENCE</small></div><div class="topright"><button class="glass" id="tourBtn">GUIDED TOUR</button><a class="glass" href="/" aria-label="ZENVIO home">ZENVIO ↗</a></div></header>
+<section class="hero" id="hero"><div class="eyebrow">PRIVATE RESIDENCE · BEVERLY HILLS</div><h1>MAISON<br><span>NOIRE.</span></h1><p>Architecture shaped by light. Discover every space, detail and material in an immersive private residence experience.</p><div class="hint">A NEW WAY TO EXPERIENCE PROPERTY</div></section>
+<div class="crosshair" id="crosshair"></div>
+<nav class="bottom" aria-label="Explore rooms"><button class="active" data-room="arrival">ARRIVAL</button><button data-room="living">LIVING</button><button data-room="kitchen">KITCHEN</button><button data-room="suite">MASTER SUITE</button><button data-room="pool">POOL</button><button id="walkBtn">WALK MODE</button></nav>
+<aside class="panel" id="info"><button class="close" id="closeInfo">×</button><span class="tag" id="infoTag">PROPERTY DETAIL</span><h2 id="infoTitle">A considered detail.</h2><p id="infoText">Explore the residence and discover the materials, spaces and features that make it exceptional.</p></aside>
+<div class="toast" id="toast"></div>
+<div class="start" id="start"><div class="startcard"><div class="brand">ZEN<span>VIO</span><b>®</b><small>INTERACTIVE PROPERTY SHOWCASE</small></div><div class="eyebrow">A DIGITAL OPEN HOUSE</div><h2>Step inside<br><span style="color:#c4afff">Maison Noire.</span></h2><p>Explore a cinematic 3D luxury residence. Choose a room, inspect details, or enter walk mode to move through the environment.</p><button class="primary" id="enterBtn">ENTER THE EXPERIENCE ↗</button><p style="font-size:10px;margin-top:18px">Prototype environment · Desktop and mobile supported</p></div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const mount=document.querySelector('#world');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x090a12);scene.fog=new THREE.Fog(0x090a12,24,75);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,150);camera.position.set(0,2.1,13);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;mount.appendChild(renderer.domElement);
+const mat=(color,roughness=.7,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+const stone=mat(0x77747a,.9), dark=mat(0x171820,.6), wall=mat(0xb7b0a4,.88), black=mat(0x17171c,.45), wood=mat(0x6b4932,.62), gold=mat(0xb89a68,.32,.7), glass=new THREE.MeshPhysicalMaterial({color:0x8ec8d8,metalness:.15,roughness:.08,transparent:true,opacity:.25,transmission:.45}), fabric=mat(0xaaa39a,.95), green=mat(0x203b32,.95), water=new THREE.MeshPhysicalMaterial({color:0x3d9db1,roughness:.12,metalness:.25,transparent:true,opacity:.82});
+const box=(w,h,d,m,x,y,z,cast=true)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=cast;o.receiveShadow=true;scene.add(o);return o};
+const sphere=(r,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),m);o.position.set(x,y,z);o.castShadow=true;scene.add(o);return o};
+const cylinder=(rt,rb,h,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,24),m);o.position.set(x,y,z);o.castShadow=true;scene.add(o);return o};
+scene.add(new THREE.HemisphereLight(0xdce7ff,0x29202a,1.8));const sun=new THREE.DirectionalLight(0xffdfbd,3.2);sun.position.set(-9,16,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);scene.add(sun);const fill=new THREE.PointLight(0x8c77ff,35,30);fill.position.set(2,5,2);scene.add(fill);const poolLight=new THREE.PointLight(0x39c8ff,28,14);poolLight.position.set(9,2,-10);scene.add(poolLight);
+const ground=box(80,.3,80,mat(0x171922),0,-.3,0,false);
+const floor=box(26,.25,22,stone,0,0,0); // open-plan residence base
+// Exterior walls with generous openings
+box(26,5,.45,wall,0,2.5,-11);box(.45,5,22,wall,-13,2.5,0);box(.45,5,22,wall,13,2.5,0);
+box(8,5,.45,wall,-9,2.5,11);box(7,5,.45,wall,9.5,2.5,11);
+// Internal partitions: room divisions with door-width openings
+box(.25,3.5,6,wall,-1.8,1.75,-7);box(.25,3.5,4,wall,-1.8,1.75,7);
+box(7,3.5,.22,wall,5.5,1.75,-2.1);box(4,3.5,.22,wall,-5,1.75,2.6);
+box(5,3.5,.22,wall,8.5,1.75,6.2);
+ // architectural ceiling beams and frames
+for(let x=-11;x<=11;x+=5.5)box(.16,.2,21,dark,x,4.95,0);
+for(let z=-8;z<=8;z+=5)box(25,.16,.16,dark,0,4.95,z);
+// glazing on back wall
+for(let x=-10;x<=10;x+=5){box(3.8,2.8,.12,glass,x,2.4,-10.72,false);box(3.9,.12,.2,black,x,3.85,-10.65);box(.1,3,.2,black,x-1.9,2.4,-10.65);box(.1,3,.2,black,x+1.9,2.4,-10.65)}
+// arrival / foyer
+box(3.8,.18,2.5,wood,0,.25,8.5);box(1.6,2.8,.16,black,0,1.65,10.72);box(1.45,2.65,.08,wood,0,1.65,10.61);sphere(.08,gold,.58,1.5,10.5);
+box(2.5,.18,.9,dark,-8,.25,8);box(2.3,.55,.7,wood,-8,.6,8);sphere(.6,green,-8,1.25,8);
+// Living room: rug, sectional sofa, coffee table, fireplace, art
+box(7,.035,5,mat(0x3e3940),-7,.17,-5);box(5,.65,1.15,fabric,-7,.62,-7.1);box(1.05,1.25,3.7,fabric,-9.25,.65,-5.4);box(1.05,1.25,3.7,fabric,-4.75,.65,-5.4);
+box(2.6,.35,1.35,black,-7,.55,-3.8);box(2.2,.12,1,wood,-7,.78,-3.8);cylinder(.11,.11,.12,gold,-7,1,-3.8);
+box(3.4,2.1,.22,black,-7,1.5,-10.68);box(2.7,1.5,.08,mat(0x5d4c58),-7,1.55,-10.52);box(3.5,.12,.6,stone,-7,.5,-10.2);
+// kitchen island and cabinetry
+box(5,.15,1.6,black,7,1.05,-7.4);box(4.8,.16,1.5,stone,7,1.2,-7.4);for(let x=5.2;x<9;x+=1.1){box(.85,1.8,.65,wood,x,1,-10.15);box(.82,.06,.7,gold,x,1.85,-10.15)}
+for(let x=5.4;x<=8.6;x+=1.6){cylinder(.28,.28,.08,black,x,.28,-5.6);cylinder(.06,.06,.8,gold,x,.68,-5.6);cylinder(.28,.28,.08,wood,x,1.08,-5.6)}
+// dining table
+box(3.8,.18,1.6,wood,1.5,.95,-2.3);for(let x of [0,3])for(let z of [-2.9,-1.7])box(.12,.9,.12,black,x,.48,z);
+for(let x of [.2,1.4,2.6]){cylinder(.045,.045,.6,gold,x,1.38,-2.3);sphere(.16,mat(0xf0dfc2),x,1.72,-2.3)}
+// master suite
+box(5.5,.06,4,mat(0x51454b),7.5,.17,3.8);box(3.6,.55,2.6,black,7.5,.62,2.5);box(3.35,.28,2.35,fabric,7.5,.95,2.5);box(3.5,.85,.25,wood,7.5,1.2,1.15);for(let x of [6.2,8.8]){box(.8,.65,.7,wood,x,.55,4.4);sphere(.09,gold,x,.95,4.4)}
+box(4,.08,.3,gold,7.5,2.1,5.2);box(2.5,1.1,.1,black,7.5,2.8,10.65);box(2.2,.8,.05,mat(0x827080),7.5,2.8,10.55);
+// bathroom detail
+box(3,.2,2.5,mat(0xaaaeb4),10.5,.2,8.4);box(2.2,.55,1.4,mat(0xd7d9dc),10.5,.55,8.4);cylinder(.48,.48,.18,mat(0xe8e8e8),10.5,.5,8.4);cylinder(.15,.15,.2,gold,10.5,.68,8.4);
+// terrace and pool outside to the east
+box(9,.2,7,mat(0x777c80),17,-.02,-7);box(6,.35,3.8,water,17,.08,-8);box(6.3,.22,.18,stone,17,.3,-10);box(6.3,.22,.18,stone,17,.3,-6);box(.18,.22,4,stone,14,.3,-8);box(.18,.22,4,stone,20,.3,-8);
+for(let x of [14,20])for(let z of [-10,-6])cylinder(.13,.13,2.7,gold,x,1.6,z);
+// garden planters and trees
+for(let x of [-12,-9,11,14,22]){box(1.5,.55,1.5,black,x,.25,13);cylinder(.13,.13,2,wood,x,1.3,13);sphere(1.15,green,x,2.8,13)}
+// floating architectural accent lights
+for(let x of [-10,-4,2,8]){const l=new THREE.PointLight(0xffd5a0,9,7);l.position.set(x,3.7,0);scene.add(l);cylinder(.12,.12,.05,gold,x,4.55,0)}
+// starry exterior ambience
+const stars=new THREE.BufferGeometry(),pts=[];for(let i=0;i<600;i++)pts.push((Math.random()-.5)*100,Math.random()*35+5,(Math.random()-.5)*100);stars.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));scene.add(new THREE.Points(stars,new THREE.PointsMaterial({color:0xc8c1ff,size:.07,transparent:true,opacity:.6})));
+const hotspots=[
+ {name:'Arrival gallery',tag:'ARCHITECTURE',text:'A quiet arrival sequence framed by warm timber, natural stone and a sculptural entrance. The residence opens into a generous gallery.' ,pos:[0,1.6,8]},
+ {name:'The living room',tag:'LIVING · 82 M²',text:'A double-height-inspired lounge with a bespoke sectional, sculptural coffee table, curated artwork and panoramic glazing.' ,pos:[-7,1.5,-5]},
+ {name:'Chef’s kitchen',tag:'KITCHEN · BESPOKE',text:'A monolithic stone island, warm timber cabinetry and integrated appliances create a calm, functional entertaining space.',pos:[7,1.5,-7]},
+ {name:'Primary suite',tag:'PRIVATE RETREAT',text:'A serene master suite with layered natural textures, custom joinery and a private connection to the terrace.',pos:[7.5,1.5,3.5]},
+ {name:'Infinity pool',tag:'OUTDOOR LIVING',text:'A resort-inspired pool terrace with architectural lighting, generous lounging space and an open view to the garden.',pos:[17,1.5,-8]}
+];
+const markerMat=new THREE.MeshBasicMaterial({color:0xc5adff});const markers=[];
+hotspots.forEach((h,i)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.13,16,16),markerMat);m.position.set(...h.pos);m.userData.index=i;scene.add(m);markers.push(m);const ring=new THREE.Mesh(new THREE.TorusGeometry(.25,.012,8,32),new THREE.MeshBasicMaterial({color:0x9e83ff,transparent:true,opacity:.8}));ring.position.copy(m.position);ring.rotation.x=Math.PI/2;scene.add(ring)});
+const destinations={arrival:[0,2.1,13],living:[-7,1.7,-2.2],kitchen:[7,1.7,-3.5],suite:[7.5,1.7,6],pool:[17,1.7,-3.5]};
+let target=new THREE.Vector3(...destinations.arrival),yaw=0,pitch=0,walking=false,keys={},tourIndex=0;
+const lookTarget=new THREE.Vector3(0,1.5,0);camera.lookAt(lookTarget);
+function moveTo(room){const p=destinations[room]||destinations.arrival;target.set(...p);walking=false;document.querySelectorAll('[data-room]').forEach(b=>b.classList.toggle('active',b.dataset.room===room));document.querySelector('#hero').style.opacity=room==='arrival'?'1':'0';toast('Exploring '+room.replace('suite','master suite').toUpperCase());}
+document.querySelectorAll('[data-room]').forEach(b=>b.addEventListener('click',()=>moveTo(b.dataset.room)));
+function toast(s){const t=document.querySelector('#toast');t.textContent=s;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),1800)}
+function showInfo(i){const h=hotspots[i];document.querySelector('#infoTag').textContent=h.tag;document.querySelector('#infoTitle').textContent=h.name;document.querySelector('#infoText').textContent=h.text;document.querySelector('#info').classList.add('show')}
+document.querySelector('#closeInfo').onclick=()=>document.querySelector('#info').classList.remove('show');
+document.querySelector('#walkBtn').onclick=()=>{walking=!walking;document.querySelector('#walkBtn').classList.toggle('active',walking);document.querySelector('#crosshair').classList.toggle('show',walking);toast(walking?'WALK MODE · WASD TO MOVE':'WALK MODE PAUSED');if(walking)document.querySelector('#hero').style.opacity='0'};
+document.querySelector('#tourBtn').onclick=()=>{const rooms=['arrival','living','kitchen','suite','pool'];moveTo(rooms[tourIndex%rooms.length]);showInfo(tourIndex%rooms.length);tourIndex++};
+document.querySelector('#enterBtn').onclick=()=>{document.querySelector('#start').classList.add('hide');toast('Welcome to Maison Noire')};
+const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();renderer.domElement.addEventListener('click',e=>{if(walking)return;mouse.x=e.clientX/innerWidth*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;raycaster.setFromCamera(mouse,camera);const hit=raycaster.intersectObjects(markers);if(hit.length)showInfo(hit[0].object.userData.index)});
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key==='Escape'){walking=false;document.querySelector('#walkBtn').classList.remove('active');document.querySelector('#crosshair').classList.remove('show')}});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+let dragging=false,lastX=0,lastY=0;renderer.domElement.addEventListener('pointerdown',e=>{if(walking){dragging=true;lastX=e.clientX;lastY=e.clientY}});addEventListener('pointerup',()=>dragging=false);addEventListener('pointermove',e=>{if(walking&&dragging){yaw-=(e.clientX-lastX)*.004;pitch=Math.max(-.8,Math.min(.8,pitch-(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY}});
+let touchStart=null;renderer.domElement.addEventListener('touchstart',e=>{if(e.touches.length===1)touchStart=[e.touches[0].clientX,e.touches[0].clientY]},{passive:true});renderer.domElement.addEventListener('touchmove',e=>{if(walking&&touchStart&&e.touches.length===1){const t=e.touches[0];yaw-=(t.clientX-touchStart[0])*.004;pitch=Math.max(-.8,Math.min(.8,pitch-(t.clientY-touchStart[1])*.003));touchStart=[t.clientX,t.clientY]}},{passive:true});
+const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(!walking){camera.position.lerp(target,1-Math.pow(.001,dt));const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);const desired=new THREE.Vector3(camera.position.x,1.5,camera.position.z-5);camera.lookAt(lookTarget.lerp(desired,.025));}else{const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));const speed=dt*5;if(keys.w||keys.arrowup)camera.position.addScaledVector(forward,speed);if(keys.s||keys.arrowdown)camera.position.addScaledVector(forward,-speed);if(keys.a||keys.arrowleft)camera.position.addScaledVector(right,-speed);if(keys.d||keys.arrowright)camera.position.addScaledVector(right,speed);camera.position.x=THREE.MathUtils.clamp(camera.position.x,-12,20);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-10,14);camera.position.y=1.7;camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0)}markers.forEach((m,i)=>{m.scale.setScalar(1+Math.sin(clock.elapsedTime*2.5+i)*.12)});renderer.render(scene,camera)}
+animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body></html>
