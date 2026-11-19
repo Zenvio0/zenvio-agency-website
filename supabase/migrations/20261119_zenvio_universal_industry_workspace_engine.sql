@@ -16,8 +16,13 @@ create table if not exists public.zenvio_industry_catalog (
     check (jsonb_typeof(dashboard_layout) = 'object'),
   aria_profile jsonb not null default '{"tone":"professional","mode":"industry_assistant"}'::jsonb
     check (jsonb_typeof(aria_profile) = 'object'),
+  knowledge_profile jsonb not null default '{"guidance":"Use approved company information only.","sources":[]}'::jsonb
+    check (jsonb_typeof(knowledge_profile) = 'object'),
+  experience_profile jsonb not null default '{"environment":"none","theme":"dark"}'::jsonb
+    check (jsonb_typeof(experience_profile) = 'object'),
+  approval_status text not null default 'draft' check (approval_status in ('draft','approved')),
   is_active boolean not null default true,
-  is_published boolean not null default true,
+  is_published boolean not null default false,
   sort_order integer not null default 100,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
@@ -183,6 +188,28 @@ else '{"version":1,"layout":"emerging_business","widgets":["projects","customers
 end
 where level = 'industry';
 
+
+-- The initial reviewed catalogue is approved and published. New entries remain drafts until reviewed.
+update public.zenvio_industry_catalog
+set approval_status = 'approved', is_published = true
+where level = 'industry';
+
+update public.zenvio_industry_catalog
+set experience_profile = case slug
+  when 'property-real-estate-infrastructure' then '{"environment":"real_estate_showroom","theme":"dark"}'::jsonb
+  when 'hospitality-accommodation' then '{"environment":"hotel_lobby","theme":"dark"}'::jsonb
+  when 'food-beverage-restaurants' then '{"environment":"restaurant","theme":"warm"}'::jsonb
+  when 'retail-consumer-goods' then '{"environment":"retail_store","theme":"dark"}'::jsonb
+  when 'ecommerce-digital-commerce' then '{"environment":"digital_store","theme":"dark"}'::jsonb
+  when 'healthcare-medical' then '{"environment":"clinic","theme":"calm"}'::jsonb
+  when 'education-learning' then '{"environment":"learning_campus","theme":"light"}'::jsonb
+  when 'architecture-design-engineering' then '{"environment":"architecture_studio","theme":"minimal"}'::jsonb
+  when 'automotive-mobility' then '{"environment":"automotive_showroom","theme":"dark"}'::jsonb
+  when 'media-entertainment-creative' then '{"environment":"creative_stage","theme":"cinematic"}'::jsonb
+  else '{"environment":"industry_workspace","theme":"dark"}'::jsonb
+end
+where level = 'industry';
+
 -- Seed broad sub-industry coverage. Owners can request missing types; Super Admin can extend this directory.
 with seed(parent_slug, names) as (
   values
@@ -232,7 +259,7 @@ expanded as (
   from seed, lateral unnest(string_to_array(names, '|')) as item
 )
 insert into public.zenvio_industry_catalog
-  (parent_id, level, name, slug, description, default_modules, dashboard_layout, aria_profile, sort_order)
+  (parent_id, level, name, slug, description, default_modules, dashboard_layout, aria_profile, knowledge_profile, experience_profile, approval_status, is_published, sort_order)
 select
   parent.id,
   'sub_industry',
@@ -242,6 +269,10 @@ select
   parent.default_modules,
   parent.dashboard_layout,
   parent.aria_profile,
+  parent.knowledge_profile,
+  parent.experience_profile,
+  parent.approval_status,
+  parent.is_published,
   row_number() over (partition by parent.id order by expanded.child_name)::integer
 from expanded
 join public.zenvio_industry_catalog parent
