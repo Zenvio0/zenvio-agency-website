@@ -395,6 +395,14 @@ before insert or update of module_key, enabled, source
 on public.zenvio_workspace_modules
 for each row execute function public.zenvio_enforce_workspace_module_status();
 
+update public.zenvio_workspace_modules wm
+set enabled = false, updated_at = now()
+from public.zenvio_module_registry mr
+where mr.module_key = wm.module_key
+  and mr.implementation_status = 'planned'
+  and wm.source = 'industry_default'
+  and wm.enabled = true;
+
 revoke all on function public.zenvio_enforce_workspace_module_status() from public, anon;
 
 drop policy if exists zenvio_industry_suggestions_submit on public.zenvio_industry_suggestions;
