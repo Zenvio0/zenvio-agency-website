@@ -210,7 +210,7 @@ on public.zenvio_backup_policies to authenticated;
 
 grant select on public.zenvio_backup_destinations to authenticated;
 
--- credential_reference and connection_status remain server-managed.
+-- Sensitive credential and connection fields remain server-managed.
 grant insert (
   organization_id,
   provider,
@@ -234,7 +234,7 @@ grant delete on public.zenvio_backup_destinations to authenticated;
 grant select on public.zenvio_backup_runs to authenticated;
 grant select on public.zenvio_restore_tests to authenticated;
 
--- Super Admin receives aggregate operational health only, never customer file contents.
+-- Super Admin receives aggregate operational health only.
 create or replace function public.zenvio_backup_platform_overview()
 returns jsonb
 language plpgsql
@@ -277,12 +277,12 @@ begin
        where status = 'failed'),
 
     'workspaces',
-      pg_catalog.coalesce((
+      coalesce((
         select pg_catalog.jsonb_agg(
           pg_catalog.jsonb_build_object(
             'organization_id', o.id,
             'organization_name', o.name,
-            'policy_enabled', pg_catalog.coalesce(p.enabled, false),
+            'policy_enabled', coalesce(p.enabled, false),
 
             'destination_count', (
               select pg_catalog.count(*)
