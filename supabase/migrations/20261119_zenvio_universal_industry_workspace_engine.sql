@@ -578,6 +578,15 @@ begin
   )
   returning id into new_node_id;
 
+  if suggestion.proposed_level = 'sub_industry' then
+    update public.zenvio_industry_catalog child
+    set default_modules = parent.default_modules,
+        dashboard_layout = parent.dashboard_layout,
+        aria_profile = parent.aria_profile
+    from public.zenvio_industry_catalog parent
+    where child.id = new_node_id and parent.id = suggestion.parent_node_id;
+  end if;
+
   update public.zenvio_industry_suggestions
   set status = 'approved', reviewed_by = auth.uid(), reviewed_at = now()
   where id = p_suggestion_id;
