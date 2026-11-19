@@ -625,8 +625,8 @@ begin
         aria_profile = parent.aria_profile,
         knowledge_profile = parent.knowledge_profile,
         experience_profile = parent.experience_profile,
-        approval_status = parent.approval_status,
-        is_published = parent.is_published
+        approval_status = 'draft',
+        is_published = false
     from public.zenvio_industry_catalog parent
     where child.id = new_node_id and parent.id = suggestion.parent_node_id;
   end if;
