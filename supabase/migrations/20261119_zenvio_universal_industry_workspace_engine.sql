@@ -431,7 +431,7 @@ create or replace function public.zenvio_guard_workspace_profile_taxonomy_change
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $$
 begin
   if (
     new.industry_id is distinct from old.industry_id
@@ -443,7 +443,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists zenvio_workspace_profile_taxonomy_guard on public.zenvio_workspace_profiles;
 create trigger zenvio_workspace_profile_taxonomy_guard
@@ -627,7 +627,7 @@ create or replace function public.zenvio_guard_industry_profile_change()
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $$
 begin
   if (
     new.industry_node_id is distinct from old.industry_node_id
@@ -638,7 +638,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists zenvio_org_industry_change_guard on public.zenvio_organizations;
 create trigger zenvio_org_industry_change_guard
@@ -657,7 +657,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   current_org public.zenvio_organizations%rowtype;
   new_request_id uuid;
@@ -705,7 +705,7 @@ begin
 
   return new_request_id;
 end;
-$;
+$$;
 
 create or replace function public.zenvio_review_industry_change(
   p_request_id uuid,
@@ -715,7 +715,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   change_request public.zenvio_industry_change_requests%rowtype;
   target_industry public.zenvio_industry_catalog%rowtype;
@@ -782,7 +782,7 @@ begin
 
   return pg_catalog.jsonb_build_object('status','approved','organization_id',change_request.organization_id);
 end;
-$;
+$$;
 
 revoke all on function public.zenvio_request_industry_change(uuid, uuid, uuid, text, text) from public, anon;
 revoke all on function public.zenvio_review_industry_change(uuid, text) from public, anon;
@@ -796,7 +796,7 @@ language plpgsql
 stable
 security definer
 set search_path = ''
-as $
+as $$
 declare result jsonb;
 begin
   if not public.zenvio_is_super_admin() then
@@ -827,7 +827,7 @@ begin
 
   return result;
 end;
-$;
+$$;
 
 revoke all on function public.zenvio_industry_platform_overview() from public, anon;
 grant execute on function public.zenvio_industry_platform_overview() to authenticated;
@@ -1225,7 +1225,7 @@ create or replace function public.zenvio_guard_industry_profile_change()
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $$
 begin
   if (
     new.industry_node_id is distinct from old.industry_node_id
@@ -1236,7 +1236,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists zenvio_org_industry_change_guard on public.zenvio_organizations;
 create trigger zenvio_org_industry_change_guard
@@ -1255,7 +1255,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   current_org public.zenvio_organizations%rowtype;
   new_request_id uuid;
@@ -1303,7 +1303,7 @@ begin
 
   return new_request_id;
 end;
-$;
+$$;
 
 create or replace function public.zenvio_review_industry_change(
   p_request_id uuid,
@@ -1313,7 +1313,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   change_request public.zenvio_industry_change_requests%rowtype;
   target_industry public.zenvio_industry_catalog%rowtype;
@@ -1380,7 +1380,7 @@ begin
 
   return pg_catalog.jsonb_build_object('status','approved','organization_id',change_request.organization_id);
 end;
-$;
+$$;
 
 revoke all on function public.zenvio_request_industry_change(uuid, uuid, uuid, text, text) from public, anon;
 revoke all on function public.zenvio_review_industry_change(uuid, text) from public, anon;
