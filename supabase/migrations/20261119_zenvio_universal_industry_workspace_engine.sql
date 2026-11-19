@@ -232,7 +232,7 @@ expanded as (
   from seed, lateral unnest(string_to_array(names, '|')) as item
 )
 insert into public.zenvio_industry_catalog
-  (parent_id, level, name, slug, description, default_modules, sort_order)
+  (parent_id, level, name, slug, description, default_modules, dashboard_layout, aria_profile, sort_order)
 select
   parent.id,
   'sub_industry',
@@ -240,6 +240,8 @@ select
   parent.slug || '-' || trim(both '-' from regexp_replace(lower(expanded.child_name), '[^a-z0-9]+', '-', 'g')),
   expanded.child_name || ' business type.',
   parent.default_modules,
+  parent.dashboard_layout,
+  parent.aria_profile,
   row_number() over (partition by parent.id order by expanded.child_name)::integer
 from expanded
 join public.zenvio_industry_catalog parent
@@ -351,7 +353,7 @@ grant select on public.zenvio_industry_catalog to authenticated;
 grant insert, update, delete on public.zenvio_industry_catalog to authenticated;
 grant select, insert, update on public.zenvio_workspace_profiles to authenticated;
 grant select, insert, update, delete on public.zenvio_workspace_modules to authenticated;
-grant select, insert, update on public.zenvio_industry_suggestions to authenticated;
+grant select on public.zenvio_industry_suggestions to authenticated;
 
 create or replace function public.zenvio_apply_industry_workspace_defaults()
 returns trigger
@@ -423,6 +425,36 @@ create trigger zenvio_org_industry_defaults
 after insert or update of industry_node_id, sub_industry_node_id, business_type
 on public.zenvio_organizations
 for each row execute function public.zenvio_apply_industry_workspace_defaults();
+
+
+create or replace function public.zenvio_guard_workspace_profile_taxonomy_change()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+begin
+  if (
+    new.industry_id is distinct from old.industry_id
+    or new.sub_industry_id is distinct from old.sub_industry_id
+    or new.business_type is distinct from old.business_type
+    or new.dashboard_layout is distinct from old.dashboard_layout
+  ) and coalesce(current_setting('zenvio.industry_change_approved', true), '') <> 'yes' then
+    raise exception 'Industry taxonomy and dashboard layout are managed by the approved industry workflow';
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists zenvio_workspace_profile_taxonomy_guard on public.zenvio_workspace_profiles;
+create trigger zenvio_workspace_profile_taxonomy_guard
+before update of industry_id, sub_industry_id, business_type, dashboard_layout
+on public.zenvio_workspace_profiles
+for each row execute function public.zenvio_guard_workspace_profile_taxonomy_change();
+
+drop trigger if exists zenvio_workspace_profiles_touch on public.zenvio_workspace_profiles;
+create trigger zenvio_workspace_profiles_touch
+before update on public.zenvio_workspace_profiles
+for each row execute function public.zenvio_touch_updated_at();
 
 create or replace function public.zenvio_submit_industry_suggestion(
   p_organization_id uuid,
