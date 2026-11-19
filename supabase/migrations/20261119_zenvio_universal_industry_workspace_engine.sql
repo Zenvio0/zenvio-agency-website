@@ -40,6 +40,7 @@ alter table public.zenvio_organizations
   add column if not exists industry_profile jsonb not null default '{}'::jsonb;
 
 create table if not exists public.zenvio_workspace_profiles (
+  dashboard_layout jsonb not null default '{"version":1,"layout":"industry_default","widgets":[]}'::jsonb check (jsonb_typeof(dashboard_layout) = 'object'),
   organization_id uuid primary key references public.zenvio_organizations(id) on delete cascade,
   industry_id uuid references public.zenvio_industry_catalog(id) on delete set null,
   sub_industry_id uuid references public.zenvio_industry_catalog(id) on delete set null,
@@ -134,6 +135,53 @@ set name = excluded.name,
     default_modules = excluded.default_modules,
     sort_order = excluded.sort_order,
     updated_at = now();
+
+
+-- Industry-specific dashboard starter layouts; widgets are configuration slots, not active engines.
+update public.zenvio_industry_catalog set dashboard_layout =
+case slug
+when 'property-real-estate-infrastructure' then '{"version":1,"layout":"real_estate","widgets":["properties","leads","viewings","commissions"]}'::jsonb
+when 'hospitality-accommodation' then '{"version":1,"layout":"hospitality","widgets":["rooms","reservations","guests","occupancy"]}'::jsonb
+when 'food-beverage-restaurants' then '{"version":1,"layout":"food_service","widgets":["orders","menu","bookings","revenue"]}'::jsonb
+when 'retail-consumer-goods' then '{"version":1,"layout":"retail","widgets":["products","inventory","sales","customers"]}'::jsonb
+when 'ecommerce-digital-commerce' then '{"version":1,"layout":"commerce","widgets":["products","orders","customers","sales"]}'::jsonb
+when 'healthcare-medical' then '{"version":1,"layout":"healthcare","widgets":["appointments","services","staff","operations"]}'::jsonb
+when 'education-learning' then '{"version":1,"layout":"education","widgets":["learners","courses","enrolments","progress"]}'::jsonb
+when 'architecture-design-engineering' then '{"version":1,"layout":"studio","widgets":["projects","proposals","clients","deliverables"]}'::jsonb
+when 'construction-building' then '{"version":1,"layout":"construction","widgets":["projects","sites","teams","milestones"]}'::jsonb
+when 'automotive-mobility' then '{"version":1,"layout":"automotive","widgets":["vehicles","service_bookings","leads","sales"]}'::jsonb
+when 'travel-tourism-recreation' then '{"version":1,"layout":"travel","widgets":["trips","bookings","guests","revenue"]}'::jsonb
+when 'transportation-logistics' then '{"version":1,"layout":"logistics","widgets":["shipments","fleet","deliveries","exceptions"]}'::jsonb
+when 'manufacturing-industrial' then '{"version":1,"layout":"manufacturing","widgets":["production","inventory","quality","orders"]}'::jsonb
+when 'agriculture-natural-resources' then '{"version":1,"layout":"agriculture","widgets":["seasons","livestock","harvest","resources"]}'::jsonb
+when 'energy-utilities' then '{"version":1,"layout":"utilities","widgets":["assets","consumption","outages","service_requests"]}'::jsonb
+when 'financial-services-fintech' then '{"version":1,"layout":"finance","widgets":["clients","accounts","transactions","risk"]}'::jsonb
+when 'legal-compliance' then '{"version":1,"layout":"legal","widgets":["matters","clients","deadlines","documents"]}'::jsonb
+when 'professional-business-services' then '{"version":1,"layout":"professional_services","widgets":["clients","projects","proposals","billable_work"]}'::jsonb
+when 'technology-software' then '{"version":1,"layout":"technology","widgets":["products","projects","incidents","releases"]}'::jsonb
+when 'media-entertainment-creative' then '{"version":1,"layout":"creative","widgets":["projects","productions","assets","publishing"]}'::jsonb
+when 'sports-fitness' then '{"version":1,"layout":"fitness","widgets":["members","sessions","coaches","attendance"]}'::jsonb
+when 'beauty-fashion-lifestyle' then '{"version":1,"layout":"beauty_lifestyle","widgets":["appointments","services","products","customers"]}'::jsonb
+when 'events-weddings-entertainment-venues' then '{"version":1,"layout":"events","widgets":["events","bookings","vendors","guests"]}'::jsonb
+when 'telecommunications-communications' then '{"version":1,"layout":"telecom","widgets":["subscribers","services","incidents","network"]}'::jsonb
+when 'environmental-sustainability' then '{"version":1,"layout":"sustainability","widgets":["projects","impact","audits","resources"]}'::jsonb
+when 'mining-metals-materials' then '{"version":1,"layout":"materials","widgets":["sites","production","inventory","safety"]}'::jsonb
+when 'aerospace-aviation-defence' then '{"version":1,"layout":"aerospace","widgets":["programs","assets","maintenance","compliance"]}'::jsonb
+when 'government-public-sector' then '{"version":1,"layout":"public_sector","widgets":["services","cases","departments","performance"]}'::jsonb
+when 'nonprofit-ngos-social-impact' then '{"version":1,"layout":"nonprofit","widgets":["programs","donors","volunteers","impact"]}'::jsonb
+when 'science-research-biotechnology' then '{"version":1,"layout":"research","widgets":["studies","labs","grants","milestones"]}'::jsonb
+when 'personal-household-local-services' then '{"version":1,"layout":"local_services","widgets":["jobs","bookings","technicians","customers"]}'::jsonb
+when 'human-resources-employment' then '{"version":1,"layout":"hr","widgets":["candidates","roles","placements","employees"]}'::jsonb
+when 'insurance-risk-management' then '{"version":1,"layout":"insurance","widgets":["policies","claims","clients","risk"]}'::jsonb
+when 'wholesale-distribution-trade' then '{"version":1,"layout":"distribution","widgets":["catalogue","purchase_orders","inventory","shipments"]}'::jsonb
+when 'pet-animal-veterinary-services' then '{"version":1,"layout":"veterinary","widgets":["patients","appointments","services","care_plans"]}'::jsonb
+when 'marine-maritime' then '{"version":1,"layout":"maritime","widgets":["vessels","voyages","cargo","maintenance"]}'::jsonb
+when 'security-safety' then '{"version":1,"layout":"security","widgets":["sites","incidents","teams","compliance"]}'::jsonb
+when 'research-consulting-intelligence' then '{"version":1,"layout":"intelligence","widgets":["research","clients","insights","deliverables"]}'::jsonb
+when 'sports-gaming-digital-communities' then '{"version":1,"layout":"digital_community","widgets":["members","events","content","engagement"]}'::jsonb
+else '{"version":1,"layout":"emerging_business","widgets":["projects","customers","operations","insights"]}'::jsonb
+end
+where level = 'industry';
 
 -- Seed broad sub-industry coverage. Owners can request missing types; Super Admin can extend this directory.
 with seed(parent_slug, names) as (
@@ -341,18 +389,20 @@ begin
     array['mirror','anticipate','swarm','blackbox','what_if','evolve','aria','crm','analytics']::text[]);
 
   insert into public.zenvio_workspace_profiles (
-    organization_id, industry_id, sub_industry_id, business_type, aria_profile
+    organization_id, industry_id, sub_industry_id, business_type, aria_profile, dashboard_layout
   )
   values (
     new.id, new.industry_node_id, new.sub_industry_node_id,
     coalesce(nullif(trim(new.business_type), ''), 'General Business'),
-    coalesce(selected_sub.aria_profile, selected_industry.aria_profile, '{"tone":"professional","mode":"industry_assistant"}'::jsonb)
+    coalesce(selected_sub.aria_profile, selected_industry.aria_profile, '{"tone":"professional","mode":"industry_assistant"}'::jsonb),
+    coalesce(selected_sub.dashboard_layout, selected_industry.dashboard_layout, '{"version":1,"layout":"industry_default","widgets":[]}'::jsonb)
   )
   on conflict (organization_id) do update
   set industry_id = excluded.industry_id,
       sub_industry_id = excluded.sub_industry_id,
       business_type = excluded.business_type,
       aria_profile = excluded.aria_profile,
+      dashboard_layout = excluded.dashboard_layout,
       updated_at = now();
 
   foreach module_name in array modules_to_enable loop
