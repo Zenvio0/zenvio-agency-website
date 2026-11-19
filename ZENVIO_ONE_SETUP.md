@@ -16,6 +16,8 @@ Additive implementation. Existing ZENVIO `admin_users`, `leads`, admin login and
 
 ## DATA FORTRESS v0.1
 - `backup.html` — owner/admin backup health dashboard (read-only metadata view).
+- `private-cloud.html` — company Google Drive BYOG connection and 5 GB allocation status UI (connection milestone only).
+- `PRIVATE_CLOUD_SETUP.md` — Cloudflare KV binding, OAuth, secrets, deployment and verification guide.
 - `supabase/migrations/20261119_zenvio_data_fortress.sql` — backup policies, destination metadata, backup run history, restore-test history and Super Admin aggregate health function.
 - This milestone creates the secure control-plane schema only. It does not run backups, connect a storage provider, or activate an RPO/RTO guarantee. Credentials must be configured as server-side Worker secrets; never store provider credentials in Supabase rows or browser code.
 
@@ -74,3 +76,11 @@ ANTICIPATE v0.3 uses deterministic rules. It detects overdue/urgent-blocked task
 
 ## DATA FORTRESS implementation boundary
 The first milestone adds tenant-scoped backup control metadata and a read-only owner/admin dashboard. A verified backup must be created by a separate scheduled backup worker, written to an independent storage account, checksum-verified, and followed by a successful restore test. Do not set a policy to enabled or describe a destination as connected until those steps are implemented and tested. The Super Admin RPC returns aggregate backup health only and never customer file contents.
+
+
+## PRIVATE CLOUD — Google Drive BYOG milestone
+- Company owner/admin connects the company's Google account using Google OAuth.
+- The Worker creates a `ZENVIO PRIVATE CLOUD` folder in that company's Google Drive.
+- Encrypted refresh-token credentials and minimal connection metadata are held in Cloudflare Workers KV; company files remain in the company's Drive.
+- The 5 GB allocation is an application target within the company's existing Drive capacity, not extra Google storage.
+- This milestone does not yet upload/download files, run automated backups, restore files, or enforce the 5 GB cap. See `PRIVATE_CLOUD_SETUP.md` before configuring or deploying.
