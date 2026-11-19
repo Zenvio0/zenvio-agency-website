@@ -24,8 +24,12 @@ Migration files:
 - `supabase/migrations/20261118_zenvio_one_anticipate.sql` — measurements and findings.
 - `supabase/migrations/20261118_zenvio_one_swarm.sql` — specialist plans, approval records and secure approval transaction.
 - `supabase/migrations/20261118_zenvio_one_blackbox_whatif_evolve.sql` — company memory, scenario simulation and measured improvement tables.
-- `supabase/migrations/20261119_zenvio_data_fortress.sql` — backup policies, destination metadata, backup run history, restore-test history and Super Admin aggregate health function.
+## DATA FORTRESS v0.1 and PRIVATE CLOUD
 
+- `backup.html` — owner/admin backup health dashboard (read-only metadata view).
+- `private-cloud.html` — company Google Drive BYOG connection and 5 GB allocation status UI (connection milestone only).
+- `PRIVATE_CLOUD_SETUP.md` — Cloudflare KV binding, OAuth, secrets, deployment and verification guide.
+- `supabase/migrations/20261119_zenvio_data_fortress.sql` — backup policies, destination metadata, backup run history, restore-test history and Super Admin aggregate health function.
 ## 3. Required Migration Order
 
 When deployment is approved, apply each migration as a separate query in the existing Supabase project's SQL Editor, in this exact order:
@@ -189,5 +193,14 @@ Before production activation:
 5. Review Cloudflare Worker bindings and secrets.
 6. Test the modules without modifying existing CRM records.
 7. Confirm that no paid service or billing upgrade is required.
+
+## PRIVATE CLOUD — Google Drive BYOG milestone
+
+- Company owner/admin connects the company's Google account using Google OAuth.
+- The Worker creates a dedicated `ZENVIO PRIVATE CLOUD` folder in that company's Google Drive.
+- Encrypted refresh-token credentials and minimal connection metadata are held in Cloudflare Workers KV; company files remain in the company's Drive.
+- The 5 GB allocation is an application target within the company's existing Google Drive capacity, not additional Google storage.
+- This milestone does not yet upload or download files, run automated backups, restore files, or enforce the 5 GB cap.
+- See `PRIVATE_CLOUD_SETUP.md` before configuring or deploying.
 
 Do not execute database migrations, change Cloudflare billing plans, or merge deployment changes without explicit approval.
