@@ -80,7 +80,18 @@ Deno.serve(async (req: Request) => {
     const adminConfig = body.admin_config as Record<string, unknown>;
     const keys = Object.keys(adminConfig);
     if (keys.some(key => !allowedFields.has(key))) return reply(400, { error: "admin_config contains an unsupported field" });
+    for (const key of ["owner_enabled", "services", "recommendations", "contact"]) {
+      if (key in adminConfig && typeof adminConfig[key] !== "boolean") {
+        return reply(400, { error: key + " must be a boolean" });
+      }
+    }
+    for (const key of ["greeting", "tone", "knowledge"]) {
+      if (key in adminConfig && typeof adminConfig[key] !== "string") {
+        return reply(400, { error: key + " must be a string" });
+      }
+    }
     if (typeof adminConfig.greeting === "string" && adminConfig.greeting.length > 500) return reply(400, { error: "Greeting is too long" });
+    if (typeof adminConfig.tone === "string" && adminConfig.tone.length > 100) return reply(400, { error: "Tone is too long" });
     if (typeof adminConfig.knowledge === "string" && adminConfig.knowledge.length > 12000) return reply(400, { error: "Knowledge text is too long" });
     const lockedFields = body.locked_fields === undefined ? [] : body.locked_fields;
     if (!Array.isArray(lockedFields) || lockedFields.length > allowedFields.size ||
