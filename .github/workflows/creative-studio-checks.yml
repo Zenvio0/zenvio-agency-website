@@ -49,6 +49,9 @@ jobs:
       - name: Test protected ARIA admin configuration
         run: deno test supabase/functions/aria-public-chat/admin-config_test.ts
 
+      - name: Test ARIA installation lifecycle policy
+        run: deno test supabase/functions/aria-public-chat/installation-access_test.ts
+
       - name: Check migration structure
         run: |
           node <<'NODE'
