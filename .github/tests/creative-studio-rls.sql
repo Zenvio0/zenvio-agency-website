@@ -84,7 +84,7 @@ set enabled = true
 where id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 
 do $$
-declare allowed boolean;
+declare allowed boolean; i integer;
 begin
   for i in 1..15 loop
     allowed := public.zenvio_aria_consume_rate_limit(
