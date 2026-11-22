@@ -27,7 +27,7 @@ jobs:
           deno-version: v2.x
 
       - name: Type-check ARIA Edge Functions
-        run: deno check supabase/functions/aria-admin/index.ts supabase/functions/aria-public-chat/index.ts
+        run: deno check --node-modules-dir=auto supabase/functions/aria-admin/index.ts supabase/functions/aria-public-chat/index.ts
 
       - name: Check customer widget JavaScript
         run: node --check aria-widget.js
