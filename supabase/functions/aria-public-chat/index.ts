@@ -27,6 +27,21 @@ function findKnowledgeAnswer(question: string, knowledge: string): string | null
   return ranked.slice(0, 3).map(x => x.block).join("\n");
 }
 
+function disabledCapability(message: string, config: Record<string, unknown>): string | null {
+  const words = new Set(tokens(message));
+  const has = (...terms: string[]) => terms.some(term => words.has(term));
+  if (config.contact === false && has("contact", "phone", "email", "address", "location", "book", "booking", "appointment", "hours", "call")) {
+    return "I'm not able to provide contact or booking details. Please use the website's contact page.";
+  }
+  if (config.recommendations === false && has("recommend", "recommendation", "suggest", "suggestion", "best", "suitable", "which", "choose")) {
+    return "I'm not configured to make recommendations. I can still answer other approved business-information questions.";
+  }
+  if (config.services === false && has("service", "services", "product", "products", "price", "pricing", "cost", "offer", "offering")) {
+    return "I'm not configured to answer service or product questions. Please explore the website for more information.";
+  }
+  return null;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply(405, { error: "Method not allowed" });
@@ -84,6 +99,9 @@ Deno.serve(async (req: Request) => {
   if (configError) return reply(503, { error: "Could not load assistant settings" });
   const config = ownerConfig?.config ?? {};
   if (config.owner_enabled === false) return reply(403, { error: "This assistant has been disabled by the website owner" });
+  const capabilityMessage = disabledCapability(message, config);
+  if (capabilityMessage) return reply(200, { reply: capabilityMessage, mode: "capability_restricted" });
+
   if (config.services === false && config.recommendations === false && config.contact === false) {
     return reply(200, { reply: config.greeting ?? "Hello! How can I help you today?", mode: "greeting" });
   }
