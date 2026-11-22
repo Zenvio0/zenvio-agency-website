@@ -413,7 +413,8 @@ export default {
       if (url.pathname === "/api/v0/generate" && request.method === "POST") {
         try { return await handleV0Generate(request, env); }
         catch (error) { return json({ error: "v0 generation service error.", detail: String(error?.message || error) }, 500); }
-      }\n      if (url.pathname === "/api/intelligence" && request.method === "POST") {
+      }
+      if (url.pathname === "/api/intelligence" && request.method === "POST") {
         try { return await handleIntelligence(request, env); }
         catch (error) { return json({ error: "Intelligence service error.", detail: String(error?.message || error) }, 500); }
       }
