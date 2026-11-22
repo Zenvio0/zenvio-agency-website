@@ -5,6 +5,7 @@ begin;
 create table if not exists public.zenvio_creative_projects (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.zenvio_organizations(id) on delete cascade,
+  unique (id, organization_id),
   created_by uuid not null references auth.users(id) on delete restrict default auth.uid(),
   name text not null check (char_length(name) between 1 and 120),
   business_type text not null default '',
@@ -23,7 +24,19 @@ create table if not exists public.zenvio_aria_installations (
   public_install_id uuid not null unique default gen_random_uuid(),
   enabled boolean not null default false,
   revoked_at timestamptz,
-  owner_config jsonb not null default jsonb_build_object(
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint zenvio_aria_installations_project_org_fk
+    foreign key (project_id, organization_id)
+    references public.zenvio_creative_projects(id, organization_id)
+    on delete cascade
+);
+
+-- Owner-editable configuration is isolated so clients cannot toggle/revoke an installation.
+create table if not exists public.zenvio_aria_owner_configs (
+  installation_id uuid primary key references public.zenvio_aria_installations(id) on delete cascade,
+  organization_id uuid not null references public.zenvio_organizations(id) on delete cascade,
+  config jsonb not null default jsonb_build_object(
     'greeting','Hello! How can I help you today?',
     'tone','Warm and professional',
     'knowledge','',
@@ -31,12 +44,7 @@ create table if not exists public.zenvio_aria_installations (
     'recommendations',true,
     'contact',true
   ),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint zenvio_aria_installations_project_org_fk
-    foreign key (project_id, organization_id)
-    references public.zenvio_creative_projects(id, organization_id)
-    on delete cascade
+  updated_at timestamptz not null default now()
 );
 
 -- ZENVIO-only controls are isolated from owner-editable configuration.
@@ -66,6 +74,7 @@ create index if not exists zenvio_aria_audit_org_created_idx
 alter table public.zenvio_creative_projects enable row level security;
 alter table public.zenvio_aria_installations enable row level security;
 alter table public.zenvio_aria_admin_controls enable row level security;
+alter table public.zenvio_aria_owner_configs enable row level security;
 alter table public.zenvio_aria_audit_events enable row level security;
 
 -- Projects: organization members can read; owners/admins can create/update/delete.
@@ -103,12 +112,28 @@ for insert to authenticated with check (
   public.zenvio_has_role(organization_id, array['owner','admin']::text[])
   and exists (
     select 1 from public.zenvio_creative_projects p
-    where p.id = project_id and p.organization_id = organization_id
+    where p.id = project_id and p.organization_id = zenvio_aria_installations.organization_id
   )
 );
 
-drop policy if exists zenvio_aria_installations_owner_update on public.zenvio_aria_installations;
-create policy zenvio_aria_installations_owner_update on public.zenvio_aria_installations
+-- Installation status/revocation is server-controlled. No client UPDATE policy exists.
+
+drop policy if exists zenvio_aria_owner_configs_member_read on public.zenvio_aria_owner_configs;
+create policy zenvio_aria_owner_configs_member_read on public.zenvio_aria_owner_configs
+for select to authenticated using (public.zenvio_is_member(organization_id));
+
+drop policy if exists zenvio_aria_owner_configs_owner_insert on public.zenvio_aria_owner_configs;
+create policy zenvio_aria_owner_configs_owner_insert on public.zenvio_aria_owner_configs
+for insert to authenticated with check (
+  public.zenvio_has_role(organization_id, array['owner','admin']::text[])
+  and exists (
+    select 1 from public.zenvio_aria_installations i
+    where i.id = installation_id and i.organization_id = zenvio_aria_owner_configs.organization_id
+  )
+);
+
+drop policy if exists zenvio_aria_owner_configs_owner_update on public.zenvio_aria_owner_configs;
+create policy zenvio_aria_owner_configs_owner_update on public.zenvio_aria_owner_configs
 for update to authenticated
 using (public.zenvio_has_role(organization_id, array['owner','admin']::text[]))
 with check (public.zenvio_has_role(organization_id, array['owner','admin']::text[]));
@@ -124,7 +149,8 @@ for select to authenticated using (
 );
 
 grant select, insert, update, delete on public.zenvio_creative_projects to authenticated;
-grant select, insert, update on public.zenvio_aria_installations to authenticated;
+grant select, insert on public.zenvio_aria_installations to authenticated;
+grant select, insert, update on public.zenvio_aria_owner_configs to authenticated;
 grant select on public.zenvio_aria_audit_events to authenticated;
 revoke all on public.zenvio_aria_admin_controls from anon, authenticated;
 
