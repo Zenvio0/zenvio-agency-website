@@ -1,0 +1,6 @@
+# Supabase Edge Function JWT verification settings for Creative Studio ARIA.
+[functions.aria-admin]
+verify_jwt = true
+
+[functions.aria-public-chat]
+verify_jwt = false
