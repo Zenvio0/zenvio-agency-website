@@ -6,7 +6,7 @@
 <section class="card"><h2>Pending invitations</h2><div style="overflow:auto"><table><thead><tr><th>Email</th><th>Role</th><th>Expires</th><th>Status</th></tr></thead><tbody id="invites"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></section></main>
 <section id="accept" class="card hidden"><h2>Accept organization invitation</h2><p class="muted">Sign in using the email address this invitation was sent to. The invitation can only be accepted once.</p><button class="btn" id="acceptInvite">Accept invitation</button><div id="acceptStatus" class="status"></div></section></div>
 <script>
-const URL="https://bohblrqrkkfmqwvtulcs.supabase.co",KEY="sb_publishable_kDAD7Eo3LDNKO7T18niELA_qGFdq8D9",db=window.supabase.createClient(URL,KEY),$=id=>document.getElementById(id);
+const SUPABASE_URL="https://bohblrqrkkfmqwvtulcs.supabase.co",KEY="sb_publishable_kDAD7Eo3LDNKO7T18niELA_qGFdq8D9",db=window.supabase.createClient(SUPABASE_URL,KEY),$=id=>document.getElementById(id);
 let session=null,lastInvite=null;const params=new URLSearchParams(location.search),token=params.get("token");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 async function boot(s){session=s;$("login").classList.add("hidden");if(token){$("accept").classList.remove("hidden");$("app").classList.add("hidden");return;} $("app").classList.remove("hidden");await loadOrgs();}
