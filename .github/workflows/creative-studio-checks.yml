@@ -13,10 +13,24 @@ on:
       - "aria-widget.js"
       - "supabase/**"
       - ".github/workflows/creative-studio-checks.yml"
+      - ".github/tests/**"
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: zenvio_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d zenvio_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -43,6 +57,15 @@ jobs:
           }
           console.log('Migration structural checks passed');
           NODE
+
+      - name: Execute migration and verify RLS in disposable PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          psql "postgresql://postgres:postgres@localhost:5432/zenvio_test" -v ON_ERROR_STOP=1 \
+            -f .github/tests/creative-studio-bootstrap.sql \
+            -f supabase/migrations/202611220001_creative_studio_aria.sql \
+            -f .github/tests/creative-studio-rls.sql
 
       - name: Check customer widget JavaScript
         run: node --check aria-widget.js
