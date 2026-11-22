@@ -38,10 +38,27 @@ Deno.serve(async (req: Request) => {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return reply(400, { error: "Invalid JSON body" }); }
   const action = typeof body.action === "string" ? body.action : "";
+  const adminDb = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+
+  if (action === "list_installations") {
+    const { data: installations, error: listError } = await adminDb
+      .from("zenvio_aria_installations")
+      .select("id, public_install_id, project_id, organization_id, enabled, revoked_at, created_at, zenvio_creative_projects(name), zenvio_organizations(name), zenvio_aria_admin_controls(globally_enabled, locked_fields)")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (listError) return reply(500, { error: "Could not load ARIA installations" });
+    const { data: events, error: eventError } = await adminDb
+      .from("zenvio_aria_audit_events")
+      .select("id, organization_id, project_id, installation_id, actor_scope, action, details, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (eventError) return reply(500, { error: "Could not load ARIA audit history" });
+    return reply(200, { ok: true, installations: installations ?? [], events: events ?? [] });
+  }
+
   const installationId = typeof body.installation_id === "string" ? body.installation_id : "";
   if (!installationId) return reply(400, { error: "installation_id is required" });
 
-  const adminDb = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: installation, error: lookupError } = await adminDb
     .from("zenvio_aria_installations")
     .select("id, project_id, organization_id, enabled, revoked_at")
