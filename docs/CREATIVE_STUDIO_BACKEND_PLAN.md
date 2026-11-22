@@ -107,8 +107,8 @@ Owners can read only their organization’s audit events. Client browser code mu
 2. Confirm the new `public` tables are explicitly enabled for the Supabase Data API. Since the 2026 Data API rollout, newly created public tables may not be automatically exposed; SQL `GRANT` statements and RLS do not by themselves switch on API exposure.
 3. Run Supabase security advisors and test positive + negative RLS cases (member, owner, unrelated user, Super Admin, anonymous).
 4. Implement and test Edge Functions without deploying them to production.
-5. Complete installation creation, owner configuration UI, and Super Admin installation manager/audit timeline.
-6. Add customer embed code using `public_install_id`, with no secret.
+5. Exercise the implemented installation publishing flow, owner configuration UI, Super Admin installation manager, and audit timeline against the development database.
+6. Verify the customer embed code using `public_install_id`, with no secret, and test revocation end-to-end.
 7. Only after explicit approval: apply production migration, deploy functions, and release the UI.
 
 ## Current implementation status
@@ -116,5 +116,6 @@ Owners can read only their organization’s audit events. Client browser code mu
 - A draft migration now defines project storage, ARIA installations, separate owner/admin configuration, audit events, and rate limiting. It has not been applied or tested against a development database.
 - Edge Function source exists for Super Admin actions and public ARIA chat; neither function is deployed.
 - Public ARIA currently uses deterministic keyword matching, not a generative AI model or voice engine.
-- The installation creation UI, owner configuration UI, Super Admin installation manager, and end-to-end browser tests remain incomplete.
+- Installation publishing, owner configuration sync, Super Admin installation controls, audit display, and the customer widget's protected endpoint call are now implemented in source; they remain unverified against a migrated database and deployed Edge Functions.
+- GitHub Actions now type-checks both Edge Functions and checks the browser JavaScript; the latest branch checks passed.
 - Cloud project save/load/delete is coded with local fallback, but it cannot work until the migration is applied in a test environment and Data API exposure is configured.
