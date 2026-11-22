@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { disabledCapability } from "./capabilities.ts";
+import { applyAdminLocks } from "./admin-config.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -57,7 +58,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: controls, error: controlError } = await adminDb
     .from("zenvio_aria_admin_controls")
-    .select("globally_enabled")
+    .select("globally_enabled, locked_fields, admin_config")
     .eq("installation_id", installation.id)
     .maybeSingle();
   if (controlError) return reply(503, { error: "Could not verify assistant status" });
@@ -83,7 +84,11 @@ Deno.serve(async (req: Request) => {
     .eq("installation_id", installation.id)
     .maybeSingle();
   if (configError) return reply(503, { error: "Could not load assistant settings" });
-  const config = ownerConfig?.config ?? {};
+  const config = applyAdminLocks(
+    (ownerConfig?.config ?? {}) as Record<string, unknown>,
+    (controls?.admin_config ?? {}) as Record<string, unknown>,
+    controls?.locked_fields,
+  );
   if (config.owner_enabled === false) return reply(403, { error: "This assistant has been disabled by the website owner" });
   const capabilityMessage = disabledCapability(message, config);
   if (capabilityMessage) return reply(200, { reply: capabilityMessage, mode: "capability_restricted" });
