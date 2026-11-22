@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
   let patch: Record<string, unknown> | null = null;
   if (action === "enable") patch = { enabled: true, revoked_at: null };
   else if (action === "disable") patch = { enabled: false };
-  else if (action === "revoke") patch = { enabled: false, revoked_at: new Date().toISOString() };
+  else if (action === "revoke") patch = { enabled: false, revoked_at: new Date().toISOString(), revoked_by: userData.user.id };
   else if (action === "restore") patch = { enabled: true, revoked_at: null };
   else if (action === "set_admin_config") {
     if (!body.admin_config || typeof body.admin_config !== "object" || Array.isArray(body.admin_config)) {
@@ -114,7 +114,12 @@ Deno.serve(async (req: Request) => {
     actor_user_id: userData.user.id,
     actor_scope: "super_admin",
     action,
-    details: { status_change: patch ?? null },
+    details: action === "set_admin_config"
+      ? {
+          updated_fields: Object.keys(body.admin_config as Record<string, unknown>),
+          locked_fields: Array.isArray(body.locked_fields) ? body.locked_fields : [],
+        }
+      : { status_change: patch ?? null },
   });
   if (auditError) return reply(500, { error: "Action applied but audit logging failed; review required" });
 
