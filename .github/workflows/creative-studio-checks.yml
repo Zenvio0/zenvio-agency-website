@@ -1,0 +1,50 @@
+name: Creative Studio checks
+
+on:
+  push:
+    branches:
+      - feat/creative-studio-foundation
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "creative-studio.html"
+      - "super-admin.html"
+      - "aria-widget.js"
+      - "supabase/**"
+      - ".github/workflows/creative-studio-checks.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check ARIA Edge Functions
+        run: deno check supabase/functions/aria-admin/index.ts supabase/functions/aria-public-chat/index.ts
+
+      - name: Check customer widget JavaScript
+        run: node --check aria-widget.js
+
+      - name: Check inline browser scripts
+        run: |
+          node --input-type=commonjs <<'NODE'
+          const fs = require('node:fs');
+          const vm = require('node:vm');
+          for (const file of ['creative-studio.html', 'super-admin.html']) {
+            const html = fs.readFileSync(file, 'utf8');
+            const marker = '<script>\\nconst SUPABASE_URL';
+            const start = html.indexOf(marker);
+            const end = html.lastIndexOf('</script>');
+            if (start < 0 || end <= start) throw new Error('Could not locate inline script in ' + file);
+            const source = html.slice(start + 8, end);
+            new vm.Script(source, { filename: file });
+            console.log(file + ': syntax OK');
+          }
+          NODE
