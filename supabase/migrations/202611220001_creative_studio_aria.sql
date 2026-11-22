@@ -143,8 +143,20 @@ for insert to authenticated with check (
 drop policy if exists zenvio_creative_projects_owner_update on public.zenvio_creative_projects;
 create policy zenvio_creative_projects_owner_update on public.zenvio_creative_projects
 for update to authenticated
-using (public.zenvio_has_role(organization_id, array['owner','admin']::text[]))
-with check (public.zenvio_has_role(organization_id, array['owner','admin']::text[]));
+using (
+  public.zenvio_has_role(organization_id, array['owner','admin']::text[])
+  and exists (
+    select 1 from public.zenvio_aria_installations i
+    where i.id = installation_id and i.organization_id = zenvio_aria_owner_configs.organization_id
+  )
+)
+with check (
+  public.zenvio_has_role(organization_id, array['owner','admin']::text[])
+  and exists (
+    select 1 from public.zenvio_aria_installations i
+    where i.id = installation_id and i.organization_id = zenvio_aria_owner_configs.organization_id
+  )
+);
 
 drop policy if exists zenvio_creative_projects_owner_delete on public.zenvio_creative_projects;
 create policy zenvio_creative_projects_owner_delete on public.zenvio_creative_projects
