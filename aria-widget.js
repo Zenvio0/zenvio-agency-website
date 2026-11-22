@@ -4,6 +4,8 @@
   script.dataset.ariaLoaded = "true";
   const greeting = script.dataset.greeting || "Hello! How can I help you today?";
   const knowledge = script.dataset.knowledge || "";
+  const installationId = script.dataset.installId || "";
+  const endpoint = script.dataset.endpoint || "";
   const host = document.createElement("div");
   host.id = "zenvio-aria-widget";
   const shadow = host.attachShadow({ mode: "open" });
@@ -44,12 +46,31 @@
       ? ranked.map(x => x.row).join("\n")
       : "I don't have that detail in the business information provided. Please contact the team and they will be happy to help.";
   };
-  const send = () => {
+  const send = async () => {
     const question = input.value.trim();
     if (!question) return;
     addMessage(question, "user");
     input.value = "";
+    $(".send").disabled = true;
+    if (installationId && endpoint) {
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ installation_id: installationId, message: question })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Assistant is unavailable right now.");
+        addMessage(payload.reply || "I couldn't prepare a response just now.", "assistant");
+      } catch (error) {
+        addMessage(error.message || "The assistant is temporarily unavailable. Please contact the business team.", "assistant");
+      } finally {
+        $(".send").disabled = false;
+      }
+      return;
+    }
     addMessage(answer(question), "assistant");
+    $(".send").disabled = false;
   };
   $(".launcher").addEventListener("click", () => { panel.hidden = false; input.focus(); });
   $(".close").addEventListener("click", () => { panel.hidden = true; });
