@@ -117,7 +117,17 @@ pageset=[{key:"home",title:"Discover",lead:"A signature all your own.",subhead:"
 }else{
 pageset=[{key:"home",title:"Home",lead:"A different way to move forward.",subhead:"Designed around what matters.",body:brief},{key:"about",title:"About",lead:"A point of view, shaped by purpose.",subhead:"The thinking behind the work.",body:brand+" brings a thoughtful, considered approach to "+business.toLowerCase()+". We believe the best outcomes start with listening, clarity and a commitment to detail."},{key:"services",title:"Services",lead:"Expertise that moves you forward.",subhead:"What we bring to the table.",body:"From the first conversation to the final detail, our services are shaped around your priorities. Tell us what you need and we will help you find the right way forward."},{key:"contact",title:"Contact",lead:"Let's make something meaningful.",subhead:"Start a conversation.",body:"Have a project in mind? We would love to hear about your goals, timeline and the opportunity ahead."}];
 }
-pages=pageset.map(p=>({...p,designSystem:id,designMode:elite?"elite":"advanced"}));
+const assetLib=window.Zenvio3DAssets?.items||[];
+let industryGroup=9;
+if(/real estate|property|developer|realtor|estate/.test(industry))industryGroup=0;
+else if(/architect|interior|design/.test(industry))industryGroup=2;
+else if(/automotive|car|vehicle|dealer/.test(industry))industryGroup=3;
+else if(/fashion|apparel|clothing|beauty/.test(industry))industryGroup=4;
+else if(/hotel|hospitality|restaurant|cafe|resort/.test(industry))industryGroup=5;
+else if(/tech|software|ai|digital/.test(industry))industryGroup=6;
+else if(/fitness|gym|wellness/.test(industry))industryGroup=7;
+else if(/retail|shop|product|store/.test(industry))industryGroup=8;
+pages=pageset.map((p,i)=>({...p,designSystem:id,designMode:elite?"elite":"advanced",assets:i===0?assetLib.slice(industryGroup*10,industryGroup*10+2).map((a,n)=>({...a,id:"template-"+a.id,x:n===0?70:8,y:n===0?20:64,size:n===0?136:104,rotation:n===0?-18:16,label:a.name})):i===2?[{...assetLib[industryGroup*10+2],id:"template-"+assetLib[industryGroup*10+2].id,x:76,y:18,size:116,rotation:14,label:assetLib[industryGroup*10+2].name}]:[]}));
 activePage=0;render();
 $("status").textContent="Created a "+(elite?"custom Elite":"curated Advanced")+" experience using "+id.toUpperCase()+" art direction. Generate again with Surprise me for a different visual system.";
 }
