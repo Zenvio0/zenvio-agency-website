@@ -83,6 +83,7 @@ Deno.serve(async (req: Request) => {
     .maybeSingle();
   if (configError) return reply(503, { error: "Could not load assistant settings" });
   const config = ownerConfig?.config ?? {};
+  if (config.owner_enabled === false) return reply(403, { error: "This assistant has been disabled by the website owner" });
   if (config.services === false && config.recommendations === false && config.contact === false) {
     return reply(200, { reply: config.greeting ?? "Hello! How can I help you today?", mode: "greeting" });
   }
