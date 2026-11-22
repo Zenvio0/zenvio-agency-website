@@ -1,0 +1,100 @@
+name: Creative Studio checks
+
+on:
+  push:
+    branches:
+      - feat/creative-studio-foundation
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "creative-studio.html"
+      - "super-admin.html"
+      - "aria-widget.js"
+      - "supabase/**"
+      - ".github/workflows/creative-studio-checks.yml"
+      - ".github/tests/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: zenvio_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d zenvio_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check ARIA Edge Functions
+        run: deno check --node-modules-dir=auto supabase/functions/aria-admin/index.ts supabase/functions/aria-public-chat/index.ts
+
+      - name: Test ARIA capability policy
+        run: deno test supabase/functions/aria-public-chat/capabilities_test.ts
+
+      - name: Test protected ARIA admin configuration
+        run: deno test supabase/functions/aria-public-chat/admin-config_test.ts
+
+      - name: Test ARIA installation lifecycle policy
+        run: deno test supabase/functions/aria-public-chat/installation-access_test.ts
+
+      - name: Test trusted ARIA visitor address
+        run: deno test supabase/functions/aria-public-chat/visitor-address_test.ts
+
+      - name: Check migration structure
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const sql = fs.readFileSync('supabase/migrations/202611220001_creative_studio_aria.sql', 'utf8');
+          const executableSql = sql.replace(/^\uFEFF?\s*(?:--[^\n]*\n\s*)*/i, '').trim();
+          if (!/^begin;[\s\S]*commit;\s*$/i.test(executableSql)) throw new Error('Migration must be wrapped in BEGIN/COMMIT');
+          if (/\bas\s+\$(?!\$)/i.test(sql)) throw new Error('Invalid single-dollar PL/pgSQL body delimiter');
+          if (!sql.includes('as $$\ndeclare') || !sql.includes('end;\n$$;')) throw new Error('Rate-limit function dollar quoting is missing or malformed');
+          for (const name of ['zenvio_creative_projects','zenvio_aria_installations','zenvio_aria_owner_configs','zenvio_aria_admin_controls','zenvio_aria_audit_events','zenvio_aria_rate_limits']) {
+            if (!sql.includes('create table if not exists public.' + name)) throw new Error('Missing table: ' + name);
+          }
+          console.log('Migration structural checks passed');
+          NODE
+
+      - name: Execute migration and verify RLS in disposable PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          psql "postgresql://postgres:postgres@localhost:5432/zenvio_test" -v ON_ERROR_STOP=1 \
+            -f .github/tests/creative-studio-bootstrap.sql \
+            -f supabase/migrations/202611220001_creative_studio_aria.sql \
+            -f .github/tests/creative-studio-rls.sql
+
+      - name: Check customer widget JavaScript
+        run: node --check aria-widget.js
+
+      - name: Check inline browser scripts
+        run: |
+          node --input-type=commonjs <<'NODE'
+          const fs = require('node:fs');
+          const vm = require('node:vm');
+          for (const file of ['creative-studio.html', 'super-admin.html']) {
+            const html = fs.readFileSync(file, 'utf8');
+            const key = html.indexOf('const SUPABASE_URL');
+            const start = html.lastIndexOf('<script>', key);
+            const end = html.lastIndexOf('</script>');
+            if (key < 0 || start < 0 || end <= start) throw new Error('Could not locate inline script in ' + file);
+            const source = html.slice(start + 8, end);
+            new vm.Script(source, { filename: file });
+            console.log(file + ': syntax OK');
+          }
+          NODE
