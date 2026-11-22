@@ -71,6 +71,57 @@ create table if not exists public.zenvio_aria_audit_events (
 create index if not exists zenvio_aria_audit_org_created_idx
   on public.zenvio_aria_audit_events (organization_id, created_at desc);
 
+-- Private per-installation rate-limit counters; only trusted server code can access these.
+create table if not exists public.zenvio_aria_rate_limits (
+  installation_id uuid not null references public.zenvio_aria_installations(id) on delete cascade,
+  visitor_hash text not null,
+  window_started_at timestamptz not null default now(),
+  request_count integer not null default 0 check (request_count >= 0),
+  primary key (installation_id, visitor_hash)
+);
+
+alter table public.zenvio_aria_rate_limits enable row level security;
+revoke all on public.zenvio_aria_rate_limits from anon, authenticated;
+
+create or replace function public.zenvio_aria_consume_rate_limit(
+  p_installation_id uuid,
+  p_visitor_hash text,
+  p_limit integer default 15,
+  p_window_seconds integer default 60
+) returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $
+declare
+  allowed boolean := false;
+begin
+  if p_limit < 1 or p_window_seconds < 1 or length(p_visitor_hash) < 16 then
+    return false;
+  end if;
+
+  insert into public.zenvio_aria_rate_limits as rl
+    (installation_id, visitor_hash, window_started_at, request_count)
+  values
+    (p_installation_id, p_visitor_hash, now(), 1)
+  on conflict (installation_id, visitor_hash) do update
+    set window_started_at = case
+          when rl.window_started_at <= now() - make_interval(secs => p_window_seconds) then now()
+          else rl.window_started_at
+        end,
+        request_count = case
+          when rl.window_started_at <= now() - make_interval(secs => p_window_seconds) then 1
+          else rl.request_count + 1
+        end
+  returning request_count <= p_limit into allowed;
+
+  return coalesce(allowed, false);
+end;
+$;
+
+revoke all on function public.zenvio_aria_consume_rate_limit(uuid,text,integer,integer) from public, anon, authenticated;
+grant execute on function public.zenvio_aria_consume_rate_limit(uuid,text,integer,integer) to service_role;
+
 alter table public.zenvio_creative_projects enable row level security;
 alter table public.zenvio_aria_installations enable row level security;
 alter table public.zenvio_aria_admin_controls enable row level security;
