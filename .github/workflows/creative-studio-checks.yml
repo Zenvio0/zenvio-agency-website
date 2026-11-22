@@ -34,9 +34,9 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const sql = fs.readFileSync('supabase/migrations/202611220001_creative_studio_aria.sql', 'utf8');
-          if (!/^begin;[\\s\\S]*commit;\\s*$/i.test(sql.trim())) throw new Error('Migration must be wrapped in BEGIN/COMMIT');
-          if (/\\bas\\s+\\$(?!\\$)/i.test(sql)) throw new Error('Invalid single-dollar PL/pgSQL body delimiter');
-          if (!sql.includes('as $\\ndeclare') || !sql.includes('end;\\n$;')) throw new Error('Rate-limit function dollar quoting is missing or malformed');
+          if (!/^begin;[\s\S]*commit;\s*$/i.test(sql.trim())) throw new Error('Migration must be wrapped in BEGIN/COMMIT');
+          if (/\bas\s+\$(?!\$)/i.test(sql)) throw new Error('Invalid single-dollar PL/pgSQL body delimiter');
+          if (!sql.includes('as $$\ndeclare') || !sql.includes('end;\n$$;')) throw new Error('Rate-limit function dollar quoting is missing or malformed');
           for (const name of ['zenvio_creative_projects','zenvio_aria_installations','zenvio_aria_owner_configs','zenvio_aria_admin_controls','zenvio_aria_audit_events','zenvio_aria_rate_limits']) {
             if (!sql.includes('create table if not exists public.' + name)) throw new Error('Missing table: ' + name);
           }
