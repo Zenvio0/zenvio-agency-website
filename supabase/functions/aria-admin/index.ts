@@ -76,9 +76,22 @@ Deno.serve(async (req: Request) => {
     if (!body.admin_config || typeof body.admin_config !== "object" || Array.isArray(body.admin_config)) {
       return reply(400, { error: "admin_config must be an object" });
     }
+    const allowedFields = new Set(["owner_enabled", "greeting", "tone", "knowledge", "services", "recommendations", "contact"]);
+    const adminConfig = body.admin_config as Record<string, unknown>;
+    const keys = Object.keys(adminConfig);
+    if (keys.some(key => !allowedFields.has(key))) return reply(400, { error: "admin_config contains an unsupported field" });
+    if (typeof adminConfig.greeting === "string" && adminConfig.greeting.length > 500) return reply(400, { error: "Greeting is too long" });
+    if (typeof adminConfig.knowledge === "string" && adminConfig.knowledge.length > 12000) return reply(400, { error: "Knowledge text is too long" });
+    const lockedFields = body.locked_fields === undefined ? [] : body.locked_fields;
+    if (!Array.isArray(lockedFields) || lockedFields.length > allowedFields.size ||
+      lockedFields.some(field => typeof field !== "string" || !allowedFields.has(field)) ||
+      new Set(lockedFields).size !== lockedFields.length) {
+      return reply(400, { error: "locked_fields must contain unique supported field names" });
+    }
     const { error } = await adminDb.from("zenvio_aria_admin_controls").upsert({
       installation_id: installation.id,
-      admin_config: body.admin_config,
+      admin_config: adminConfig,
+      locked_fields: lockedFields,
       updated_at: new Date().toISOString(),
     }, { onConflict: "installation_id" });
     if (error) return reply(500, { error: "Could not update protected configuration" });
