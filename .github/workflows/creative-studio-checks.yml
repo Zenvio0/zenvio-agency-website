@@ -46,6 +46,9 @@ jobs:
       - name: Test ARIA capability policy
         run: deno test supabase/functions/aria-public-chat/capabilities_test.ts
 
+      - name: Test protected ARIA admin configuration
+        run: deno test supabase/functions/aria-public-chat/admin-config_test.ts
+
       - name: Check migration structure
         run: |
           node <<'NODE'
