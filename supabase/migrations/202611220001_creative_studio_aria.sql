@@ -190,8 +190,20 @@ for insert to authenticated with check (
 drop policy if exists zenvio_aria_owner_configs_owner_update on public.zenvio_aria_owner_configs;
 create policy zenvio_aria_owner_configs_owner_update on public.zenvio_aria_owner_configs
 for update to authenticated
-using (public.zenvio_has_role(organization_id, array['owner','admin']::text[]))
-with check (public.zenvio_has_role(organization_id, array['owner','admin']::text[]));
+using (
+  public.zenvio_has_role(organization_id, array['owner','admin']::text[])
+  and exists (
+    select 1 from public.zenvio_aria_installations i
+    where i.id = installation_id and i.organization_id = zenvio_aria_owner_configs.organization_id
+  )
+)
+with check (
+  public.zenvio_has_role(organization_id, array['owner','admin']::text[])
+  and exists (
+    select 1 from public.zenvio_aria_installations i
+    where i.id = installation_id and i.organization_id = zenvio_aria_owner_configs.organization_id
+  )
+);
 
 -- Admin control rows deliberately have NO authenticated policies.
 -- Only trusted server-side service role code may modify them.
@@ -207,6 +219,15 @@ grant select, insert, update, delete on public.zenvio_creative_projects to authe
 grant select, insert on public.zenvio_aria_installations to authenticated;
 grant select, insert, update on public.zenvio_aria_owner_configs to authenticated;
 grant select on public.zenvio_aria_audit_events to authenticated;
+
+-- Trusted Edge Functions use the service role; never expose this role in browser code.
+grant select, insert, update, delete on public.zenvio_creative_projects to service_role;
+grant select, insert, update, delete on public.zenvio_aria_installations to service_role;
+grant select, insert, update, delete on public.zenvio_aria_owner_configs to service_role;
+grant select, insert, update, delete on public.zenvio_aria_admin_controls to service_role;
+grant select, insert, update, delete on public.zenvio_aria_audit_events to service_role;
+grant select, insert, update, delete on public.zenvio_aria_rate_limits to service_role;
+
 revoke all on public.zenvio_aria_admin_controls from anon, authenticated;
 
 commit;
