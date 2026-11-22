@@ -177,4 +177,6 @@ $("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginBt
 $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
 db.auth.getSession().then(({data,error})=>{if(data?.session)start(data.session);});
 db.auth.onAuthStateChange((event,s)=>{if(event==="SIGNED_OUT"){session=null;$("app").classList.add("hidden");$("authView").classList.remove("hidden");}});
-</script></body></html>
+</script>
+<script src="/aria-voice.js" defer></script>
+</body></html>
