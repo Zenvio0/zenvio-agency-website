@@ -237,6 +237,56 @@ async function handleSwarmPlan(request, env) {
     antLingDiagnostic: provider === "gemini" ? antLingDiagnostic : null
   });
 }
+
+async function handleV0Generate(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "Request body must be valid JSON." }, 400); }
+  const organizationId = typeof body.organizationId === "string" ? body.organizationId : "";
+  const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
+  if (!/^[0-9a-f-]{36}$/i.test(organizationId)) return json({ error: "A valid organization is required." }, 400);
+  if (prompt.length < 30 || prompt.length > 8000) return json({ error: "Website brief must contain 30–8000 characters." }, 400);
+  const membership = await verifyMember(request, organizationId);
+  if (!membership.ok) return json({ error: membership.error }, membership.status);
+  if (!env.V0_API_KEY) return json({
+    error: "v0 is not connected on this Worker yet.",
+    code: "V0_NOT_CONFIGURED",
+    fallbackAvailable: true
+  }, 503);
+  try {
+    const response = await fetch("https://api.v0.dev/v1/chats", {
+      method: "POST",
+      headers: {
+        "authorization": "Bearer " + env.V0_API_KEY,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ message: prompt })
+    });
+    const raw = await response.text();
+    let result;
+    try { result = JSON.parse(raw); } catch { result = null; }
+    if (!response.ok) {
+      const detail = String(result?.error?.message || result?.message || "The v0 API request failed.")
+        .replace(/Bearer\\s+\\S+/gi, "Bearer [redacted]").slice(0, 240);
+      return json({ error: "v0 generation could not be completed.", providerStatus: response.status, detail }, response.status === 429 ? 429 : 502);
+    }
+    const chat = result?.chat || result;
+    const version = chat?.latestVersion || result?.latestVersion || {};
+    const demoUrl = version?.demoUrl || chat?.demo || result?.demoUrl || null;
+    const files = Array.isArray(version?.files) ? version.files : Array.isArray(chat?.files) ? chat.files : [];
+    return json({
+      ok: true,
+      chatId: chat?.id || result?.id || null,
+      chatUrl: chat?.url || result?.url || null,
+      demoUrl,
+      files: files.map(file => ({ name: String(file?.name || "").slice(0, 240), content: typeof file?.content === "string" ? file.content.slice(0, 250000) : "" })).filter(file => file.name),
+      fileCount: files.length,
+      provider: "v0"
+    });
+  } catch (error) {
+    return json({ error: "Could not reach the v0 service.", detail: String(error?.message || error).slice(0, 180) }, 502);
+  }
+}
+
 async function handleIntelligence(request, env) {
   let body;
   try { body = await request.json(); } catch { return json({ error: "Request body must be valid JSON." }, 400); }
@@ -302,7 +352,7 @@ export default {
         try { return await handleSwarmPlan(request, env); }
         catch (error) { return json({ error: "SWARM planning service error.", detail: String(error?.message || error) }, 500); }
       }
-      if (url.pathname === "/api/intelligence" && request.method === "POST") {
+      if (url.pathname === "/api/v0/generate" && request.method === "POST") {\n        try { return await handleV0Generate(request, env); }\n        catch (error) { return json({ error: "v0 generation service error.", detail: String(error?.message || error) }, 500); }\n      }\n      if (url.pathname === "/api/intelligence" && request.method === "POST") {
         try { return await handleIntelligence(request, env); }
         catch (error) { return json({ error: "Intelligence service error.", detail: String(error?.message || error) }, 500); }
       }
