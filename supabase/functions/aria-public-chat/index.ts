@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { disabledCapability } from "./capabilities.ts";
 import { applyAdminLocks } from "./admin-config.ts";
 import { installationAccessError } from "./installation-access.ts";
+import { trustedVisitorAddress } from "./visitor-address.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -76,8 +77,7 @@ Deno.serve(async (req: Request) => {
   const accessError = installationAccessError(installation, controls, config);
   if (accessError) return reply(403, { error: accessError });
 
-  const address = req.headers.get("cf-connecting-ip") ??
-    (req.headers.get("x-forwarded-for") ?? "unknown").split(",")[0].trim();
+  const address = trustedVisitorAddress(req.headers);
   const hashInput = new TextEncoder().encode(rateSalt + ":" + address);
   const hash = await crypto.subtle.digest("SHA-256", hashInput);
   const visitorHash = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
