@@ -332,6 +332,60 @@ async function handleIntelligence(request, env) {
     attempted: failures
   });
 }
+
+async function handleAriaChat(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "Request body must be valid JSON." }, 400); }
+  const message = typeof body.message === "string" ? body.message.trim() : "";
+  const moduleName = typeof body.module === "string" ? body.module.slice(0, 60) : "ZENVIO ONE";
+  const language = typeof body.language === "string" && ["en", "hi", "ur", "auto"].includes(body.language) ? body.language : "auto";
+  if (!message || message.length > 3000) return json({ error: "Message must contain 1–3000 characters." }, 400);
+
+  // Public assistant is rate-limited per Cloudflare client IP. No API keys are sent to the browser.
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (env.PRIVATE_CLOUD_KV) {
+    const bucket = Math.floor(Date.now() / 3600000);
+    const key = "aria-public:" + ip + ":" + bucket;
+    const used = Number(await env.PRIVATE_CLOUD_KV.get(key) || 0);
+    if (used >= 20) return json({ error: "ARIA's hourly message limit has been reached for this connection. Please try again later." }, 429);
+    await env.PRIVATE_CLOUD_KV.put(key, String(used + 1), { expirationTtl: 3700 });
+  }
+
+  const languageInstruction = language === "en"
+    ? "Reply in clear, natural English."
+    : language === "hi"
+      ? "Reply in natural Hindi using Devanagari script."
+      : language === "ur"
+        ? "Reply in natural Urdu using Urdu script."
+        : "Detect the language of the user's message. Reply in the same language: English, Hindi (Devanagari), or Urdu (Urdu script). Roman Urdu should receive a natural Urdu/Roman Urdu response matching the user's style.";
+  const systemPrompt = "You are ARIA, the friendly, capable voice and chat companion for ZENVIO ONE. " +
+    "Welcome users warmly, explain ZENVIO ONE modules, and help with general business, creative studio, workflow and dashboard questions. " +
+    "You are a conversational assistant, not an autonomous operator. Never claim to see private dashboard data unless it is included in the request. " +
+    "Never claim to have performed actions, changed records, sent messages, published websites, or accessed connected accounts. " +
+    "Do not ask for passwords, API keys, or secrets. Keep replies concise, helpful and conversational. " +
+    languageInstruction + " Current page/module: " + moduleName + ".";
+  const failures = [];
+  if (env.ANT_LING_API_KEY) {
+    const ling = await callAntLing(env.ANT_LING_API_KEY, systemPrompt, message);
+    if (ling.ok) return json({ reply: ling.answer, mode: "ant_ling", fallback: false });
+    failures.push({ provider: "ant_ling", status: ling.status });
+  }
+  if (env.GEMINI_API_KEY) {
+    for (const model of [PRIMARY_MODEL, BACKUP_MODEL]) {
+      const result = await callGemini(model, env.GEMINI_API_KEY, systemPrompt + "\n\nUser: " + message);
+      if (result.ok) return json({ reply: result.answer, mode: "gemini", fallback: true });
+      failures.push({ provider: "gemini", model, status: result.status });
+      if (!isQuotaOrTemporary(result.status, result.body)) break;
+    }
+  }
+  const fallback = language === "hi"
+    ? "मैं ARIA हूँ, ZENVIO ONE की सहायक। अभी AI सेवा उपलब्ध नहीं है। आप अपना सवाल पूछ सकते हैं; मैं सीमित स्थानीय सहायता देने की कोशिश करूँगी।"
+    : language === "ur"
+      ? "میں ARIA ہوں، ZENVIO ONE کی معاون۔ اس وقت AI سروس دستیاب نہیں۔ آپ اپنا سوال پوچھ سکتے ہیں؛ میں محدود مقامی مدد دینے کی کوشش کروں گی۔"
+      : "I'm ARIA, your ZENVIO ONE companion. The live AI service isn't connected right now, but I can still help with basic guidance. Please try again later for a full conversation.";
+  return json({ reply: fallback, mode: "local_fallback", attempted: failures });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -345,6 +399,10 @@ export default {
         status: 204,
         headers: { "access-control-allow-origin": origin || url.origin, "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "authorization, content-type", "vary": "Origin" }
       });
+      if (url.pathname === "/api/aria/chat" && request.method === "POST") {
+        try { return await handleAriaChat(request, env); }
+        catch (error) { return json({ error: "ARIA service error.", detail: String(error?.message || error).slice(0, 180) }, 500); }
+      }
       if (url.pathname === "/api/health" && request.method === "GET") {
         return json({ service: "ZENVIO ONE Intelligence", status: "online", ai: env.ANT_LING_API_KEY ? "ant_ling_primary" : (env.GEMINI_API_KEY ? "gemini_primary" : "local_fallback"), primary: ANT_LING_MODEL, backup: PRIMARY_MODEL + " → " + BACKUP_MODEL, providers: { antLing: !!env.ANT_LING_API_KEY, gemini: !!env.GEMINI_API_KEY } });
       }
@@ -352,7 +410,11 @@ export default {
         try { return await handleSwarmPlan(request, env); }
         catch (error) { return json({ error: "SWARM planning service error.", detail: String(error?.message || error) }, 500); }
       }
-      if (url.pathname === "/api/v0/generate" && request.method === "POST") {\n        try { return await handleV0Generate(request, env); }\n        catch (error) { return json({ error: "v0 generation service error.", detail: String(error?.message || error) }, 500); }\n      }\n      if (url.pathname === "/api/intelligence" && request.method === "POST") {
+      if (url.pathname === "/api/v0/generate" && request.method === "POST") {
+        try { return await handleV0Generate(request, env); }
+        catch (error) { return json({ error: "v0 generation service error.", detail: String(error?.message || error) }, 500); }
+      }
+      if (url.pathname === "/api/intelligence" && request.method === "POST") {
         try { return await handleIntelligence(request, env); }
         catch (error) { return json({ error: "Intelligence service error.", detail: String(error?.message || error) }, 500); }
       }

@@ -61,4 +61,6 @@ $("logout").addEventListener("click",async()=>{await db.auth.signOut();location.
 renderModules(["aria","crm","analytics","mirror","anticipate","swarm","blackbox","what_if","evolve"]);$("parent").disabled=true;
 db.auth.getSession().then(async({data})=>{if(data.session)try{await authorize(data.session);}catch(e){show("authError",e);}});
 db.auth.onAuthStateChange(event=>{if(event==="SIGNED_OUT")location.reload();});
-</script></body></html>
+</script>
+<script src="/aria-voice.js" defer></script>
+</body></html>

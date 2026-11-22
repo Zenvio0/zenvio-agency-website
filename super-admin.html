@@ -40,4 +40,6 @@ window.revokeInvite=async id=>{if(!confirm("Revoke this unused invitation?"))ret
 $("logout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
 db.auth.getSession().then(async({data})=>{if(data.session)try{await authorize(data.session);}catch(e){showError("authError",e);}});
 db.auth.onAuthStateChange((event)=>{if(event==="SIGNED_OUT")location.reload();});
-</script></body></html>
+</script>
+<script src="/aria-voice.js" defer></script>
+</body></html>
