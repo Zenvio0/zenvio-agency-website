@@ -1,5 +1,6 @@
 -- Creative Studio cloud persistence + ARIA ownership boundaries.
 -- REVIEW ONLY: do not apply to production until tested on an isolated Supabase branch.
+-- After applying in development, explicitly expose these public tables in Supabase Data API settings if they are not auto-exposed.
 begin;
 
 create table if not exists public.zenvio_creative_projects (
@@ -16,6 +17,8 @@ create table if not exists public.zenvio_creative_projects (
 );
 create index if not exists zenvio_creative_projects_org_updated_idx
   on public.zenvio_creative_projects (organization_id, updated_at desc);
+create index if not exists zenvio_creative_projects_created_by_idx
+  on public.zenvio_creative_projects (created_by);
 
 create table if not exists public.zenvio_aria_installations (
   id uuid primary key default gen_random_uuid(),
@@ -33,6 +36,9 @@ create table if not exists public.zenvio_aria_installations (
 );
 
 -- Owner-editable configuration is isolated so clients cannot toggle/revoke an installation.
+create index if not exists zenvio_aria_installations_org_idx
+  on public.zenvio_aria_installations (organization_id);
+
 create table if not exists public.zenvio_aria_owner_configs (
   installation_id uuid primary key references public.zenvio_aria_installations(id) on delete cascade,
   organization_id uuid not null references public.zenvio_organizations(id) on delete cascade,
@@ -46,6 +52,9 @@ create table if not exists public.zenvio_aria_owner_configs (
   ),
   updated_at timestamptz not null default now()
 );
+
+create index if not exists zenvio_aria_owner_configs_org_idx
+  on public.zenvio_aria_owner_configs (organization_id);
 
 -- ZENVIO-only controls are isolated from owner-editable configuration.
 create table if not exists public.zenvio_aria_admin_controls (
@@ -70,6 +79,10 @@ create table if not exists public.zenvio_aria_audit_events (
 );
 create index if not exists zenvio_aria_audit_org_created_idx
   on public.zenvio_aria_audit_events (organization_id, created_at desc);
+create index if not exists zenvio_aria_audit_project_idx
+  on public.zenvio_aria_audit_events (project_id);
+create index if not exists zenvio_aria_audit_installation_idx
+  on public.zenvio_aria_audit_events (installation_id);
 
 -- Private per-installation rate-limit counters; only trusted server code can access these.
 create table if not exists public.zenvio_aria_rate_limits (
