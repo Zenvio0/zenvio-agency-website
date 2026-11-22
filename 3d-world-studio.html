@@ -100,4 +100,6 @@ $("dropzone").addEventListener("dragover",e=>{e.preventDefault();$("dropzone").s
 $("dropzone").addEventListener("dragleave",()=>{$("dropzone").style.borderColor="";});
 $("dropzone").addEventListener("drop",e=>{e.preventDefault();$("dropzone").style.borderColor="";chooseFiles(e.dataTransfer.files);});
 $("refresh").onclick=loadWorlds;$("login").addEventListener("submit",async e=>{e.preventDefault();const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){$("authError").textContent=error.message;return;}await start(data.session);});$("logout").onclick=async()=>{await db.auth.signOut();location.reload();};db.auth.getSession().then(({data})=>{if(data?.session)start(data.session);});
-</script></body></html>
+</script>
+<script src="/aria-voice.js" defer></script>
+</body></html>
