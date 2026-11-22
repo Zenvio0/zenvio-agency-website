@@ -105,7 +105,7 @@ create or replace function public.zenvio_aria_consume_rate_limit(
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
   allowed boolean := false;
 begin
@@ -130,7 +130,7 @@ begin
 
   return coalesce(allowed, false);
 end;
-$;
+$$;
 
 revoke all on function public.zenvio_aria_consume_rate_limit(uuid,text,integer,integer) from public, anon, authenticated;
 grant execute on function public.zenvio_aria_consume_rate_limit(uuid,text,integer,integer) to service_role;
