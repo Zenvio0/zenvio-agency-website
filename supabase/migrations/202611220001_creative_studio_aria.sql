@@ -43,6 +43,7 @@ create table if not exists public.zenvio_aria_owner_configs (
   installation_id uuid primary key references public.zenvio_aria_installations(id) on delete cascade,
   organization_id uuid not null references public.zenvio_organizations(id) on delete cascade,
   config jsonb not null default jsonb_build_object(
+    'owner_enabled',true,
     'greeting','Hello! How can I help you today?',
     'tone','Warm and professional',
     'knowledge','',
