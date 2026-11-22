@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { disabledCapability } from "./capabilities.ts";
 import { applyAdminLocks } from "./admin-config.ts";
+import { installationAccessError } from "./installation-access.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -52,9 +53,7 @@ Deno.serve(async (req: Request) => {
     .eq("public_install_id", installId)
     .maybeSingle();
   if (installError) return reply(503, { error: "Could not verify assistant installation" });
-  if (!installation || !installation.enabled || installation.revoked_at) {
-    return reply(403, { error: "This assistant is currently unavailable" });
-  }
+  if (!installation) return reply(403, { error: "This assistant is currently unavailable" });
 
   const { data: controls, error: controlError } = await adminDb
     .from("zenvio_aria_admin_controls")
@@ -62,7 +61,20 @@ Deno.serve(async (req: Request) => {
     .eq("installation_id", installation.id)
     .maybeSingle();
   if (controlError) return reply(503, { error: "Could not verify assistant status" });
-  if (controls?.globally_enabled === false) return reply(403, { error: "This assistant is currently unavailable" });
+
+  const { data: ownerConfig, error: configError } = await adminDb
+    .from("zenvio_aria_owner_configs")
+    .select("config")
+    .eq("installation_id", installation.id)
+    .maybeSingle();
+  if (configError) return reply(503, { error: "Could not load assistant settings" });
+  const config = applyAdminLocks(
+    (ownerConfig?.config ?? {}) as Record<string, unknown>,
+    (controls?.admin_config ?? {}) as Record<string, unknown>,
+    controls?.locked_fields,
+  );
+  const accessError = installationAccessError(installation, controls, config);
+  if (accessError) return reply(403, { error: accessError });
 
   const address = req.headers.get("cf-connecting-ip") ??
     (req.headers.get("x-forwarded-for") ?? "unknown").split(",")[0].trim();
@@ -78,18 +90,6 @@ Deno.serve(async (req: Request) => {
   if (rateError) return reply(503, { error: "Rate limiter unavailable" });
   if (allowed !== true) return reply(429, { error: "Please wait a moment before sending another message" });
 
-  const { data: ownerConfig, error: configError } = await adminDb
-    .from("zenvio_aria_owner_configs")
-    .select("config")
-    .eq("installation_id", installation.id)
-    .maybeSingle();
-  if (configError) return reply(503, { error: "Could not load assistant settings" });
-  const config = applyAdminLocks(
-    (ownerConfig?.config ?? {}) as Record<string, unknown>,
-    (controls?.admin_config ?? {}) as Record<string, unknown>,
-    controls?.locked_fields,
-  );
-  if (config.owner_enabled === false) return reply(403, { error: "This assistant has been disabled by the website owner" });
   const capabilityMessage = disabledCapability(message, config);
   if (capabilityMessage) return reply(200, { reply: capabilityMessage, mode: "capability_restricted" });
 
