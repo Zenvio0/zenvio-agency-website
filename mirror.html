@@ -43,4 +43,6 @@ $("logout").addEventListener("click",async()=>{await db.auth.signOut();location.
 db.auth.getSession().then(({data})=>{if(data?.session)start(data.session);});
 db.auth.onAuthStateChange((event,s)=>{if(event==="SIGNED_OUT"){session=null;$("app").classList.add("hidden");$("authView").classList.remove("hidden");}});
 renderTabs();
-</script></body></html>
+</script>
+<script src="/aria-voice.js" defer></script>
+</body></html>
